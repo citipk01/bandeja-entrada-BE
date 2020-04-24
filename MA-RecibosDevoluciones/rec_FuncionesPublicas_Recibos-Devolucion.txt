@@ -1,0 +1,1200 @@
+﻿'Ult. Modif: 07 - 11 - 18
+'Se modifica la generación de reportes para que obtenga el lugar de pago correspondiente al cbu del empleado(QSCODIGOS = 30012)
+Dim ruta 
+Dim ruta2
+Dim reporte
+Dim strSql 
+Dim prefijo
+Dim parametros
+Dim identidad      
+Dim clavePDFs 
+	clavePDFs = "xDn35Psd2A"
+Dim filename2019
+	filename2019 = ""
+
+	Dim filename2019_final
+	filename2019_final = ""    
+ 
+'GENERACIÓN EN PDF
+Sub EnviarAPdf_PDF(parametrosReporte, identidadArchivo)
+'msgbox "parametrosReporte-->" & parametrosReporte
+'msgbox "identidadArchivo-->" & identidadArchivo
+	pstrCodigo = Trim(reporte)       
+	'msgbox "Creo objeto: "& identidadArchivo
+	Set qsRep = CreateObject("RepR2011.Render")
+	pstrParametro = parametrosReporte      
+	'qsRep.Export pstrCodigo, pstrParametro 	   
+'	if  CInt(identidadArchivo) > 300 then
+'		msgbox identidadArchivo
+'	end if  
+
+	'qsRep.ExportPDF pstrcodigo, pstrParametro, ruta & prefijo & identidadArchivo & ".pdf"
+	qsRep.ExportPDF pstrcodigo, pstrParametro, ruta & replace(identidadArchivo,"/","-") & ".pdf"        
+	Set qsRep = Nothing
+End Sub     
+'GENERACIÓN EN ZIP
+Sub EnviarAPdf(parametrosReporte, identidadArchivo, liquidacion, legajo)
+'msgbox "parametrosReporte-->" & parametrosReporte
+'msgbox "identidadArchivo-->" & identidadArchivo
+				pstrCodigo = Trim(reporte)       
+				'msgbox "Creo objeto: "& identidadArchivo
+	Set qsRep = CreateObject("RepR2011.Render")
+				pstrParametro = parametrosReporte      
+				'qsRep.Export pstrCodigo, pstrParametro                 
+'               if  CInt(identidadArchivo) > 300 then
+'                               msgbox identidadArchivo
+'               end if  
+
+				'qsRep.ExportPDF pstrcodigo, pstrParametro, ruta & prefijo & identidadArchivo & ".pdf"
+
+   ' filename2019 = ruta & replace(identidadArchivo,"/","-")  
+		filename2019 = ruta2 & "\temp\" & replace(identidadArchivo,"/","-") & "_tmp"  
+		filename2019_final = ruta & replace(identidadArchivo,"/","-")  
+			   ' inputbox "","", pstrcodigo & " x " & pstrParametro & " x " & filename2019 & ".pdf"  
+				qsRep.ExportPDF pstrcodigo, pstrParametro, filename2019 & ".pdf"        
+				Set qsRep = Nothing 
+				'2019
+				set objShell = createobject("wscript.shell")   
+				
+				'script = "zip -P "&clavePDFs&" " & filename2019 & ".zip " & filename2019 & ".pdf -qq -j"    
+				script1 = ruta2 & "\leerPdf.exe -o " & filename2019 & ".pdf" & " -s " & filename2019_final & ".pdf" & " -t *" & legajo & "x" & liquidacion  & "* -fs 34"
+				'script1 = ruta2 & "\leerPdf.exe -o " & filename2019 & ".pdf" & " -s " & filename2019_final & ".pdf" & " -t *" & 1010139920 & "x" & 82552  & "* -fs 34"
+				script2 = "zip -P " & clavePDFs & " " & filename2019_final & ".zip " & filename2019_final & ".pdf -qq -j" 
+				'inputbox "","",script1
+				objShell.CurrentDirectory = "C:\temp\leerPdf"
+				objShell.run script1  , 0, true  
+							   ' inputbox "","",script2 
+				objShell.run script2  , 0, true'false        
+				'----------------
+				dim fs
+				Set fs= CreateObject("Scripting.FileSystemObject")
+				if fs.FileExists(filename2019 &".pdf") then
+								fs.DeleteFile(filename2019 &".pdf")
+				else
+								msgbox "No se encontró el archivo render. Por favor pruebe nuevamente."                             
+				end if  
+					 
+				if fs.FileExists(filename2019_final &".pdf") then
+					fs.DeleteFile(filename2019_final &".pdf")
+				else
+					msgbox "No se encontró el archivo en el servidor. Por favor pruebe nuevamente."		
+				end if	
+set fs=nothing
+				
+End Sub   
+
+
+Public Function encrypts( mystring,  MySeed,  MyMax) 
+	Dim temp 
+	Dim tempascii 
+	Dim tempstring 
+
+	For x = 1 To len(mystring)'MyMax
+		temp = Mid(mystring, x, 1)   
+	   ' msgbox temp
+		tempascii = Asc(temp) 
+	  '  msgbox tempascii
+		tempascii = tempascii + MySeed       
+	   ' msgbox tempascii
+		tempstring = tempstring & Chr(tempascii)
+	   
+	Next 
+	   encrypts = tempstring
+End Function
+
+Public Function decrypts( mystring,  MySeed,  MyMax)
+	Dim temp 
+	Dim tempascii
+	Dim tempstring
+
+	For x = 1 To MyMax
+		temp = Mid(mystring, x, 1)
+		tempascii = Asc(temp)
+		tempascii = tempascii - MySeed
+		tempstring = tempstring & Chr(tempascii)
+	Next 
+
+End Function
+
+Public Function stringtobinary( mystring,  maxlength)
+	Dim Filter 
+	For x = 1 To maxlength
+		Filter = 1
+		tempascii = Asc(Mid(mystring, x, 1))
+		For y = 1 To 8
+			tempbit = tempascii And Filter
+			If tempbit > 0 Then
+				binary_string = 1 & binary_string
+			Else
+				binary_string = 0 & binary_string
+			End If
+			Filter = Filter * 2
+		Next 
+		temp = binary_string
+		temp = rev(temp)
+	Next 
+	stringtobinary = temp
+End Function
+
+Public Function binarytostring( mystring,  maxlength) 
+	Dim binarystring 
+	Dim place
+	Dim Letter 
+	Dim my_string 
+	Dim total 
+	place = 128
+	For x = 1 To Len(mystring) Step 8
+		binarystring = rev(Mid(mystring, x, 8))
+		For y = 1 To 8
+			total = total + Mid(binarystring, y, 1) * place
+			place = place / 2
+		Next
+		place = 128
+		my_string = my_string & Chr(total)
+		total = 0
+	Next 
+	binarytostring = my_string
+
+End Function
+
+Public Function stringtooctal( mystring,  maxlength) 
+	Dim tempascii 
+	Dim tempbit 
+	Dim binary_string 
+	Dim Filter
+	
+
+	
+	For x = 1 To maxlength
+		Filter = 7
+		tempascii = Asc(Mid(mystring, x, 1))
+		For y = 1 To 3
+			tempbit = tempascii And Filter
+			If tempbit > 0 Then
+				binary_string = (7 * tempbit / Filter) & binary_string
+			Else
+				binary_string = 0 & binary_string
+			End If
+			Filter = Filter * 8
+		Next
+		 stringtooctal = stringtooctal & binary_string
+		binary_string = ""
+	Next 
+End Function
+
+Public Function octaltostring( mystring,  maxlength)
+	Dim binarystring 
+	Dim place
+	Dim Letter 
+	Dim my_string 
+	Dim total
+	place = 64
+	For x = 1 To Len(mystring) Step 3
+		binarystring = Mid(mystring, x, 3)
+		For y = 1 To 3
+			total = total + Mid(binarystring, y, 1) * place
+			place = place / 8
+		Next
+		place = 64
+		my_string = my_string & Chr(total)
+		total = 0
+	Next 
+	octaltostring = my_string
+
+End Function
+
+Public Function stringtohex( mystring,  maxlength)
+	Dim tempascii
+	Dim tempbit
+	Dim binary_string
+	Dim Filter
+	Dim Letter(6) 
+	Dim hexletter
+
+	Letter(0) = "A"
+	Letter(1) = "B"
+	Letter(2) = "C"
+	Letter(3) = "D"
+	Letter(4) = "E"
+	Letter(5) = "F"
+	
+	For x = 1 To len(mystring)'maxlength
+		Filter = 15
+		tempascii = Asc(Mid(mystring, x, 1))
+		For y = 1 To 2
+			tempbit = tempascii And Filter
+			hexletter = (15 * tempbit / Filter)
+			If hexletter >= 10 Then
+				binary_string = Letter(hexletter - 10) & binary_string
+			Else
+				binary_string = hexletter & binary_string
+			End If
+			Filter = Filter * 16
+		Next 
+		 stringtohex = stringtohex & binary_string
+		binary_string = ""
+	Next 
+End Function
+
+Public Function hextostring( mystring,  maxlength) 
+	Dim binarystring
+	Dim place
+	Dim Letter 
+	Dim my_string
+	Dim total
+	Dim value
+	
+	place = 16
+	For x = 1 To Len(mystring) Step 2
+		binarystring = Mid(mystring, x, 2)
+		For y = 1 To 2
+			Select Case Mid(binarystring, y, 1)
+			Case "A"
+				value = 10
+			Case "B"
+				value = 11
+			Case "C"
+				value = 12
+			Case "D"
+				value = 13
+			Case "E"
+				value = 14
+			Case "F"
+				value = 15
+			Case Else
+				value = Val(Mid(binarystring, y, 1))
+			End Select
+			
+			total = total + value * place
+			place = place / 16
+		Next 
+		place = 16
+		my_string = my_string & Chr(total)
+		total = 0
+	Next 
+	hextostring = my_string
+
+End Function
+
+Public Function rev( mybinary)
+	For x = 1 To 8
+		a = Mid(mybinary, x, 1)
+		If a = 1 Then
+			a = 0
+		Else
+			a = 1
+		End If
+		temp = temp & a
+	Next 
+	rev = temp
+End Function                 
+
+
+sub InsertaWeb (COD_LQ, COD_MF, FILENAME, ID_LOTE)       
+	
+	'inputbox "","","DELETE CB_RECIBOS WHERE COD_MF = " & COD_MF & " AND COD_LQ = " & COD_LQ & " "
+	obj.Conexion.Execute("DELETE CB_RECIBOS WHERE COD_MF = " & COD_MF & " AND COD_LQ = " & COD_LQ & " ")
+	'inputbox "","", "INSERT INTO CB_RECIBOS (COD_LQ, COD_MF, FILENAME, HABILITADO, ID_LOTE) VALUES (" & COD_LQ & ", " & COD_MF & ", '" & FILENAME & "', 0, " & obj.Numerador("_file") & ")"
+	obj.Conexion.Execute("INSERT INTO CB_RECIBOS (COD_LQ, COD_MF, FILENAME, HABILITADO, ID_LOTE) VALUES (" & COD_LQ & ", " & COD_MF & ", '" & FILENAME & "', 0, " & ID_LOTE & ")") 
+
+end sub            
+
+
+sub NombreLiq
+
+	Obj.Controles("lblLIQ").texto = ""
+	Liq = obj.Controles("txtLiquidacion").texto 
+	InstrCount = 0
+	if Liq <> "" then   
+	
+		If Len(Liq) Then
+			InstrCount = UBound(Split(Liq, ","))
+		End If  
+		
+		if InstrCount = 0 then
+				  
+			set resSqlQLiq= obj.conexion.openresultset("SELECT DISTINCT DESC_LQ FROM LIQUIDAC WHERE COD_LQ = " & Liq & " ") 
+				 
+					if not resSqlQLiq.eof   then
+		
+							Obj.Controles("lblLIQ").texto = resSqlQLiq(0)   
+		
+					end if   
+					
+					resSqlQLiq.close
+		else
+			
+			Obj.Controles("lblLIQ").texto = "Ha seleccionado mas de una liquidación."
+		
+		end if    
+		  
+	end if 
+ 
+end sub
+
+
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+'' UTILITARIO ══════════════════════════════════════════════════════════════════════════════════════════════════════════''
+	public function  getCurrentDateAsString 
+		formatoFecha = YYYYMMDD_HHmm
+		stringDate = ""
+		'stringDate = Format(Now, 		formatDate)
+		'stringDate = Format(Date, 		formatDate)
+		stringDate = Format(CStr(Now), 	formatoFecha)     
+		getCurrentDateAsString = stringDate
+	end function
+
+	public function  getDateAsString(dateToString) 
+		if isnull(dateToString) then 
+			exit function
+		end if
+		formatoFecha = YYYYMMDD
+		stringDate = ""
+		stringDate = Format(CStr(dateToString), 	formatoFecha)  
+		''stringDate = dateToString.ToString(YYYYMMDD) '', CultureInfo.InvariantCulture
+		getDateAsString = stringDate
+	end function
+
+	public function  getBooleanValue (integerValue) 
+		if integerValue <> 0 or integerValue > 0 then
+				getBooleanValue = true
+			else
+				getBooleanValue = false
+		end if   
+	end function
+
+	public function  getYesNoFromBool (booleanValue) 
+		if booleanValue = true then
+				getYesNoFromBool = "Y"
+			else
+				getYesNoFromBool = "N"
+		end if   
+	end function
+
+	public Function getBooleanValue_Excel(valorATransformar)
+		valorBooleano = true
+
+		select case UCase(Trim(valorATransformar))
+			case "Y", "S", "SI"
+				valorBooleano = true
+			case "N", "N", "NO", "0"
+				valorBooleano = false
+		end select
+		
+		getBooleanValue_Excel = valorBooleano
+	End Function
+
+	public function getMsgCantResultados(cantResultados)
+		mensaje = "" 
+		select case Cint(cantResultados)
+			case 0
+				mensaje = "Sin resultados"
+			case 1
+				mensaje = "un solo resultado"
+			case else
+				mensaje = cantResultados & " resultados"
+		end select
+		getMsgCantResultados = mensaje
+	end function
+
+	public function getPorcentaje(valorDecimal)
+		valorConFormato = format(round(valorDecimal , 2), "#,##0.00") & " %"
+		getPorcentaje = valorConFormato
+	end function
+	
+	public Function esSoloLetras(textoVerificar)
+		Set rex = New RegExp
+		ONLY_LETTERS = "[^a-zA-Z]"
+		rex.Pattern = ONLY_LETTERS
+		esSoloLetras = rex.Test(textoVerificar)
+	End Function
+
+	public Function esSoloNrosCommasSpaces(textoVerificar)
+		Set rex = New RegExp
+		ONLY_NUMBERS = "^[\d \,]*$"
+		ONLY_NUMBERS = "^[(?!\s)\d \,]*$"
+		rex.Pattern = ONLY_NUMBERS
+		resultado = rex.Test(textoVerificar)
+		''mensaje = "resultado REGEX: " & resultado & "   string: " & textoVerificar & " ]"
+		''inputBox "", "", mensaje
+		esSoloNrosCommasSpaces = resultado
+	End Function
+
+	public function getTextoSeparadoPorComaYComilla(textoSeparadoPorComa)
+		textoSeparadoPorComaComilla = ""
+		'1) Agregar comillas entre las comas (si existen) y quitar todos los espacios
+			textoSeparadoPorComa =	replace(textoSeparadoPorComa," ", "")
+			textoSeparadoPorComaComilla = UCase(replace(textoSeparadoPorComa,",", "', '"))		
+		'2) Agregar comilla al principio
+			textoSeparadoPorComaComilla = "'" & textoSeparadoPorComaComilla
+		'3) Agregar comilla al final
+			textoSeparadoPorComaComilla = textoSeparadoPorComaComilla & "'"
+		
+		getTextoSeparadoPorComaYComilla = textoSeparadoPorComaComilla
+	end function
+'' UTILITARIO VISUAL ═══════════════════════════════════════════════════════════════════════════════════════════════════''
+	const msg_OK  		= 0
+	const msg_Info  	= 1
+	const msg_Warn  	= 2
+	const msg_Error 	= 3
+	const msg_Question	= 4
+	const msg_Input 	= 5
+	const msg_DB 		= 6
+
+	public function  msg_onWindow (mensaje, tipo)
+		mensajeTitulo = "Aviso-Carga de Vacaciones"'""
+
+		select case tipo
+			case msg_Info
+				msgBox mensaje, vbInformation 	+ vbOkOnly, mensajeTitulo
+
+			case msg_Warn
+				msgBox mensaje, vbExclamation 	+ vbOkOnly, mensajeTitulo
+
+			case msg_Error
+				msgBox mensaje, vbCritical 		+ vbOkOnly, mensajeTitulo
+				
+			case msg_Question
+				answer = msgBox(mensaje ,vbExclamation 	+ vbYesNo , mensajeTitulo)
+				if  answer = vbYes Then
+						msg_onWindow = true
+						exit function
+					else
+						msg_onWindow = false
+						exit function
+				end if
+
+			case msg_Input
+				inputBox mensaje, mensajeTitulo, mensaje
+
+		end select
+		''	
+	end function
+
+
+	sub msg_onFormControl (mensaje, tipo) 
+		reemplazarTexto = true
+		nombreControl_MostrarMensaje		 =	"txtEstadoImportacion_info"
+
+
+		if reemplazarTexto = true then
+			obj.controles(nombreControl_MostrarMensaje).TEXTO =	mensaje
+		else
+			anteriorTexto = obj.controles(nombreControl_MostrarMensaje).TEXTO 
+			textoSeparador = vbNewLine & "____________________________" & vbtab & vbNewLine 
+			obj.controles(nombreControl_MostrarMensaje).TEXTO = mensaje & textoSeparador & anteriorTexto
+		end if
+		select case tipo
+			case msg_OK
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(10, 150, 15)''rgb(0, 200, 3) 
+			case msg_Info
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(15, 130, 180) ''20, 160, 250
+			case msg_Warn
+				''obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(250, 160, 0)''rgb(225, 200, 70)
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(100, 80, 0)''rgb(225, 200, 70)
+			case msg_Error
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(200, 70, 55)
+			case msg_Question
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(190, 100, 180)
+			case msg_Input
+
+		end select
+		exit sub	
+	end sub
+
+
+	public function pintarFilaGrilla(nroFila, tipo, nombreGrilla, cantColumnasGrilla)
+		''cantColumnasGrilla = 15
+		Dim color
+		select case tipo
+			case msg_OK
+				color = rgb(10, 150, 15)''rgb(0, 200, 3) 
+			case msg_Info
+				color = rgb(15, 130, 180) ''20, 160, 250
+			case msg_Warn
+				color = rgb(100, 80, 0)''rgb(82, 67, 0)''rgb(250, 160, 0)''rgb(225, 200, 70)
+			case msg_Error
+				color = rgb(200, 70, 55)
+			case msg_Question
+				color = rgb(190, 100, 180)
+			case msg_DB
+				color = rgb(40, 150, 140)
+			case msg_DB_Update
+				color = rgb(20, 120, 120)
+				
+		end select
+		obj.Controles(nombreGrilla).refControl.Cell(7, (nroFila),0,(nroFila),cantColumnasGrilla) = color
+	end function
+
+	public function cambiarPosicion(nombreControl, ejeX_LEFT, ejeY_TOP)
+		obj.controles(nombreControl).refControl.Left 	= ejeX_LEFT
+		obj.controles(nombreControl).refControl.Top 	= ejeY_TOP
+	end function
+	
+	private function isEmptyOrNull(valorACorroborar)
+		isEmptyOrNull = true
+		if isnull(valorACorroborar) or trim(valorACorroborar)="" then 
+				isEmptyOrNull = true
+			else
+				isEmptyOrNull = false
+		end if
+	end function
+''**********************************************************************************************************************************************************************************************************''
+'' col_ResponsableID				nroCol_ResponsableID					
+'' col_Responsable					nroCol_Responsable				
+'' col_SOEID						nroCol_SOEID			
+'' col_NroLegajo					nroCol_NroLegajo				
+'' col_NombreApellido				nroCol_NombreApellido					
+'' col_CantRecibosDevueltos			nroCol_CantRecibosDevueltos						
+'' col_PorcRecibosDevueltos			nroCol_PorcRecibosDevueltos						
+'' col_PorcRecibosPendientes		nroCol_PorcRecibosPendientes							
+										
+'' col_Responsable					nroCol_Responsable				
+'' col_SOEID						nroCol_SOEID						
+'' col_NroLegajo					nroCol_NroLegajo				
+'' col_NombreApellido				nroCol_NombreApellido					
+'' col_ANIO						col_ANIO							
+'' col_MES						col_MES							
+'' col_COD_LQ						nroCol_liq_COD_LQ							
+'' col_DESC_LQ						nroCol_liq_DESC_LQ							
+'' col_FechaDescarga				nroCol_FechaDescarga					
+'' col_FechaDevolucion				nroCol_FechaDevolucion					
+'' col_EstaFirmado					nroCol_EstaFirmado				
+'' col_DevolucionTipoIngreso		nroCol_DevolucionTipoIngreso							
+'' col_DevolucionUsuario			nroCol_DevolucionUsuario						
+
+''	Descripción								NombreColumna
+''	ResponsableID							col_ResponsableID
+''	Responsable								col_Responsable
+''	SOEID									col_SOEID
+''	NroLegajo								col_COD_MF
+''	NombreApellido							col_NombreApellido
+''	Cant. Recibos devueltos					col_CantRecibosDevueltos
+''	Cant. Recibos Total 					col_CantRecibosTotal
+''	 % Recibos devueltos					col_PorcRecibosDevueltos
+''	 % Recibos pendientes					col_PorcRecibosPendientes
+''	Liquidación								col_liq_COD_LQ
+''	Descripción								col_liq_DESC_LQ
+''	Fecha de Descarga						col_FechaDescarga
+''	Fecha de Devolución						col_FechaDevolucion
+''	Está firmado							col_EstaFirmado
+''	DevolucionTipoIngreso					col_DevolucionTipoIngreso
+''	DevolucionUsuario						col_DevolucionUsuario
+''	chkVerInformeDetallado
+''	chkVerInformeGral_Liquidacion
+''	chkVerInformeGral
+''	txtNroLegajo_fltRep
+''	cmbNroLiquidacion_fltRep
+''	txtResponsable_fltRep
+''	
+''	
+
+
+
+'' SELECT M.COD_MF
+'' 	, M.NOM_MF
+'' 	, M.RESPONS 
+'' 	, (SELECT  R.DESCRIP FROM  cb_respon R WHERE R.RESPONS = M.RESPONS) AS RESPONSABLE
+'' FROM MAEFUNC2 M
+'' WHERE RESPONS = '20AAA'
+
+
+
+
+ 
+const nombreGrillaInformeGral_Liquidacion = "grdDevolucion_InformeGral_Liquidacion"
+const nombreGrillaInformeGral = "grdDevolucion_InformeGral"
+const nombreGrillaInformeDetallado = "grdDevolucion_InformeDetallado"
+const nombreTitulo_DevolucionReporte = "txtTitulo_DevolucionReporte"
+const nombreTitulo_GrillaInformeGral = "txtTitulo_grdDevolucion_InformeGral"
+const nombreTitulo_GrillaInformeDetallado = "txtTitulo_grdDevolucion_InformeDetallado"
+const nombrelblCantFilasGrilla_InformeDetallado = "lblCantFilasGrilla_InformeDetallado"
+const nombrelblCantFilasGrilla_InformeGral = "lblCantFilasGrilla_InformeGral"
+
+const cantColumnasGrillaInformeDetallado = 12
+const msgNotApplicable = "N/A"
+const msgPendiente = "Pendiente" ''"Pendiente Devolución"
+const fechaComienzoRecibos_default = "01/07/2019" 
+
+
+private function cargarControlesPorDefecto()
+	'obj.controles("txtCodFormulario").setFoco() 
+	increaseSizeOfTxt(nombreTitulo_DevolucionReporte)
+	increaseSizeOfTxt(nombreTitulo_GrillaInformeGral)
+	increaseSizeOfTxt(nombreTitulo_GrillaInformeDetallado)
+
+	'' Grillas
+	mostrarGrillaInformeDetallado(false)
+	obj.controles(nombreGrillaInformeGral_Liquidacion).refControl.Visible = false
+	''obj.controles(nombreTitulo_GrillaInformeGral).refControl.Location = New Point(200,200)
+	cambiarPosicion nombreTitulo_GrillaInformeGral, 250, 3720
+
+
+	'' Checkbox - Tildes
+	obj.controles("chkBuscarPorSoeid_fltRep").Valor = 1
+	obj.controles("chkVerInformeGral_Liquidacion").Valor = 1
+	chkVerInformeGral_Click_Action
+	chkBuscarPorSoeid_Click_Action
+	msgDescripcion_InformeGral_Liquidacion = ""&_ 
+		"Le permitirá tener una Vista que muestra por cada liquidación, los totales de recibos:"&_
+		" emitidos, recibidos, pendientes y sus porcentajes"
+	obj.controles("chkVerInformeGral_Liquidacion").Descripcion = msgDescripcion_InformeGral_Liquidacion
+
+	'' TEST- Pruebas de funcionalidad
+	obj.controles("txtNroLegajo_fltRep").Texto = "SP77362, af14527, ab58195, ad69105" 
+
+end function
+
+private function mostrarGrillaInformeGral(mostrarBoolean)
+	obj.controles(nombreGrillaInformeGral).refControl.Visible = mostrarBoolean
+	obj.controles(nombreTitulo_GrillaInformeGral).refControl.Visible = mostrarBoolean
+	obj.controles("lblCantFilasGrilla_InformeGral").refControl.Visible = mostrarBoolean
+end function
+
+private function mostrarGrillaInformeDetallado(mostrarBoolean)
+	obj.controles(nombreGrillaInformeDetallado).refControl.Visible = mostrarBoolean
+	obj.controles(nombreTitulo_GrillaInformeDetallado).refControl.Visible = mostrarBoolean
+	obj.controles("lblCantFilasGrilla_InformeDetallado").refControl.Visible = mostrarBoolean
+end function
+
+private function increaseSizeOfTxt(nombreControlTxt)
+	''obj.controles(nombreControlTxt).ColorTexto = vbBlack
+	obj.controles(nombreControlTxt).refControl.FontSize = 14
+	obj.controles(nombreControlTxt).refControl.Appearance = 0
+	obj.controles(nombreControlTxt).refControl.BorderStyle = 0
+	obj.controles(nombreControlTxt).refControl.FontBold = True
+	obj.controles(nombreControlTxt).refControl.Enabled = false
+end function
+
+'''Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+'''    Label1.Location = New Point(50, 70)
+'''End Sub
+'''For Each Item In xmlDOC.documentElement.selectNodes(vecTipos(t))
+'''	 		CargarXML Item, ""
+'''		Next
+
+private function guardarExcelComo(rutaDestino)
+	''Set NewBook = Workbooks.Add 
+	''Do 
+	''	fName = Application.GetSaveAsFilename 
+	''Loop Until fName <> False 
+	''NewBook.SaveAs Filename:=fName
+
+
+	''dim sFolder as string
+	''sFolder = "c:\Users\dr\Desktop\"
+	''Set objWorkbook = Workbooks.Open(sFolder & "test.xlsx")
+	''objWorkbook.Sheets("sheetName").recalc
+	''objWorkbook.SaveAs sFolder & format(date(), "yyyymmdd") & ".xlsx"
+	''objWorkbook.Close
+
+
+	''----------------
+	Set objExcel = CreateObject("Excel.Application")
+	Set objWorkbook = objExcel.Application.Workbooks.Open(rutaYNombreArchivo)
+	objExcel.DisplayAlerts = false
+	
+	objWorkbook.SaveAs
+	objWorkbook.Close
+	objExcel.Quit
+	Set objExcel = Nothing
+	Set objWorkbook = Nothing
+end function
+
+
+private function crearCarpeta(strFolderPath)
+	const separador = "\" 
+
+	strFolderPath = FolderPath &separador & FolderName
+		If Dir(strFolderPath, vbDirectory) = "" Then
+		  MkDir strFolderPath ''
+		End If
+end function
+
+
+
+''https://docs.microsoft.com/en-us/office/vba/api/excel.workbook.saveas
+	public function cargarGrillaCon_FechaDescarga(nombreGrillaACargar)
+		grilla = nombreGrillaACargar
+		cantFilasGrilla = obj.controles(grilla).filas
+
+
+		FOR i=0 TO (cantFilasGrilla - 1)
+				db_FechaDescarga_Primer = ""
+				db_FechaDescarga_Ultima = ""
+				col_COD_MF = obj.controles(grilla).ValorCelda("col_COD_MF", i)  
+				col_COD_LQ = obj.controles(grilla).ValorCelda("col_COD_LQ", i)  
+				if isnull(col_COD_MF) then 	col_COD_MF = ""		end if 
+				if isnull(col_COD_LQ) then 	col_COD_LQ = ""		end if 
+
+				query =	" SELECT log.COD_MF "&_
+						" 	, log.COD_LQ "&_
+						" 	, l.DESC_LQ "&_
+						" 	, MIN(TO_DATE(log.CDATE,'DD-MM-YYYY')) AS FechaDescarga_Primer "&_
+						" 	, MAX(TO_DATE(log.CDATE,'DD-MM-YYYY')) AS FechaDescarga_Ultima "&_
+						" FROM  "&_
+						" 	CB_RECIBOS_LOG log "&_
+						" 	,LIQUIDAC l  "&_
+						" WHERE log.S_ID IS NOT NULL "&_
+						" AND log.COD_LQ = l.COD_LQ "&_
+						" AND log.COD_LQ = "&col_COD_LQ  &_
+						" AND log.COD_MF = "&col_COD_MF  &_
+						" GROUP BY log.COD_MF, log.COD_LQ, l.DESC_LQ "
+
+				''msg_onWindow query, msg_Input
+				Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+					if not rs.EOF then
+							db_FechaDescarga_Primer	= rs.rdoColumns("FechaDescarga_Primer").Value
+							db_FechaDescarga_Ultima	= rs.rdoColumns("FechaDescarga_Ultima").Value
+					end if
+				rs.close
+
+				if isEmptyOrNull(db_FechaDescarga_Primer) then 
+					db_FechaDescarga_Primer	= msgNotApplicable 
+					exit function 	
+				end if
+
+				if isEmptyOrNull(db_FechaDescarga_Ultima) then 
+					db_FechaDescarga_Ultima	= msgNotApplicable 
+					exit function 	
+				end if
+
+				
+				db_FechaDescarga_Primer = getDateAsString(db_FechaDescarga_Primer)
+				db_FechaDescarga_Ultima = getDateAsString(db_FechaDescarga_Ultima)
+				
+				obj.controles(grilla).ValorCelda("col_FechaDescarga_Primer", i) = db_FechaDescarga_Primer
+				obj.controles(grilla).ValorCelda("col_FechaDescarga_Ultima", i) = db_FechaDescarga_Ultima
+		NEXT
+
+	end function
+	public function cargarGrillaCon_DatosDevolucion(nombreGrillaACargar)
+		grilla = nombreGrillaACargar
+		cantFilasGrilla = obj.controles(grilla).filas
+		FOR i=0 TO (cantFilasGrilla - 1)
+				db_QS_A_FECHA	= ""
+				db_HORA			= ""
+				db_FIRMA		= ""
+				db_USUARIO		= ""
+				db_TipoIngreso	= ""
+				db_FechaDevolucion	= ""
+
+				col_COD_MF = obj.controles(grilla).ValorCelda("col_COD_MF", i)  
+				col_COD_LQ = obj.controles(grilla).ValorCelda("col_COD_LQ", i)  
+				if isnull(col_COD_MF) then 	col_COD_MF = ""		end if 
+				if isnull(col_COD_LQ) then 	col_COD_LQ = ""		end if 
+
+				query =	" SELECT d.* "&_
+						" 	,(TO_CHAR(d.QS_A_FECHA, 'YYYY-MM-DD') "&_
+						" 		|| ' ' || d.HORA "&_
+						" 		) AS FechaDevolucion "&_
+						" 	, d.FIRMA "&_
+						" 	, (d.INGRESO || '-' || "&_
+						" 		CASE UPPER(d.INGRESO)  "&_
+						" 			WHEN 'A' THEN 'Automático' "&_
+						" 			WHEN 'M' THEN 'Manual' "&_
+						" 		END "&_
+						" 		) AS TipoIngreso "&_
+						" 	, d.USUARIO "&_
+						" FROM CB_DEVOLUCION_RECIBOS d "&_
+						" WHERE COD_LQ <> 0 "&_
+						" AND COD_LQ = "&col_COD_LQ&_
+						" AND COD_MF = "&col_COD_MF
+
+				'" 	,(TO_CHAR(to_date(d.QS_A_FECHA,'DD-MM-RRRR'), 'YYYY-MM-DD') "&_
+				''msg_onWindow query, msg_Input
+				Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+					if not rs.EOF then
+							db_QS_A_FECHA	= rs.rdoColumns("QS_A_FECHA").Value
+							db_HORA			= rs.rdoColumns("HORA").Value
+							db_FIRMA		= rs.rdoColumns("FIRMA").Value
+							db_USUARIO		= rs.rdoColumns("USUARIO").Value
+							db_TipoIngreso	= rs.rdoColumns("TipoIngreso").Value
+							db_FechaDevolucion	= rs.rdoColumns("FechaDevolucion").Value
+					end if
+				rs.close
+
+				if isEmptyOrNull(db_QS_A_FECHA)  then db_QS_A_FECHA	= "" end if
+				if isEmptyOrNull(db_FIRMA)  then db_FIRMA	= msgNotApplicable end if
+				if isEmptyOrNull(db_USUARIO)  then db_USUARIO	= msgNotApplicable end if
+				if isEmptyOrNull(db_TipoIngreso)  then db_TipoIngreso	= msgNotApplicable end if
+
+				'db_QS_A_FECHA = getDateAsString(db_QS_A_FECHA)	
+				
+				col_FechaDevolucion = db_QS_A_FECHA & " " & db_HORA
+
+					''mensaje = "db_FechaDevolucion: " & db_FechaDevolucion & vbNewLine &_
+					''		  "db_QS_A_FECHA: " & db_QS_A_FECHA & vbNewLine &_
+					''		  "getDateAsString(db_QS_A_FECHA): " & getDateAsString(db_QS_A_FECHA)
+					''msg_onWindow mensaje, msg_Info
+
+				if isEmptyOrNull(col_FechaDevolucion) then 
+					col_FechaDevolucion	= msgPendiente 
+					 'pintarFilaGrilla(nroFila, tipo, nombreGrilla, cantColumnasGrilla)
+					 pintarFilaGrilla i+1, msg_Error, grilla, cantColumnasGrillaInformeDetallado
+					 
+				end if
+
+				obj.controles(grilla).ValorCelda("col_FechaDevolucion", i)		= col_FechaDevolucion
+				obj.controles(grilla).ValorCelda("col_EstaFirmado", i)			= db_FIRMA
+				obj.controles(grilla).ValorCelda("col_DevolucionTipoIngreso", i)= db_TipoIngreso
+				obj.controles(grilla).ValorCelda("col_DevolucionUsuario", i)	= db_USUARIO
+		NEXT
+
+	end function
+
+
+
+	public function cargarGrillaCon_Responsable(nombreGrillaACargar)
+		grilla = nombreGrillaACargar
+		cantFilasGrilla = obj.controles(grilla).filas
+		FOR i=0 TO (cantFilasGrilla - 1)
+				db_ResponsableID= ""
+				db_Responsable	= ""
+
+				col_COD_MF = obj.controles(grilla).ValorCelda("col_COD_MF", i)  
+				if isnull(col_COD_MF) then 	col_COD_MF = ""		end if 
+
+				query = " SELECT M.COD_MF "&_
+						" 	, M.NOM_MF "&_
+						" 	, M.RESPONS AS ResponsableID "&_
+						" 	, (SELECT  R.DESCRIP FROM   "&_
+						" 		cb_respon R WHERE R.RESPONS = M.RESPONS "&_
+						" 		) AS Responsable "&_
+						" FROM MAEFUNC2 M "&_
+						" WHERE COD_MF IS NOT NULL "&_
+						" AND RESPONS IS NOT NULL "&_
+						" AND COD_MF = "&col_COD_MF
+
+				''msg_onWindow query, msg_Input
+				Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+					if not rs.EOF then
+							db_ResponsableID	= rs.rdoColumns("ResponsableID").Value
+							db_Responsable		= rs.rdoColumns("Responsable").Value
+					end if
+				rs.close
+
+				if isnull(db_ResponsableID) then db_ResponsableID	= "" end if
+				if isnull(db_Responsable) then db_Responsable	= "" end if
+
+				obj.controles(grilla).ValorCelda("col_ResponsableID", i)		= db_ResponsableID
+				obj.controles(grilla).ValorCelda("col_Responsable", i)			= db_Responsable
+		NEXT
+	end function
+
+	public sub btnActualizarResultados_InformeGral
+	
+	end sub	
+
+''**********************************************************************************************************************************************************************************************************''
+	public function cargarGrillaInformeGral_Liquidacion()
+		grilla = nombreGrillaInformeGral_Liquidacion
+		obj.controles(grilla).limpiarGrilla
+		'' 0) Dimensionar las variables que se obtendrán de la DB
+			Dim db_COD_LQ
+			Dim db_ANIO
+			Dim db_MES
+			Dim db_DESC_LQ
+			Dim db_TOTAL
+			Dim db_CANT_DEVUELTO
+		'' 1) Preparar query de obtención
+				query = " SELECT DISTINCT  "&_
+					" 	l.COD_LQ AS COD_LQ "&_
+					" 	, TO_CHAR(l.FDES_LQ, 'YYYY') AS ANIO "&_
+					" 	, TO_CHAR(l.FDES_LQ, 'MM') AS MES "&_
+					" 	, l.DESC_LQ "&_
+					" 	, COUNT(*) AS TOTAL "&_
+					" 	, SUM(CASE  "&_
+					" 		WHEN (SELECT COUNT(*) FROM CB_DEVOLUCION_RECIBOS D "&_
+					" 			WHERE D.COD_LQ = R.COD_LQ  "&_
+					" 			AND R.COD_MF = D.COD_MF)  = 0  "&_
+					" 			THEN 0 "&_
+					" 			ELSE 1  "&_
+					" 			END "&_
+					" 		) AS CANT_DEVUELTO "&_
+					" FROM LIQUIDAC l  "&_
+					" RIGHT JOIN CB_RECIBOS R "&_
+					" ON l.COD_LQ = R.COD_LQ "&_
+					" WHERE l.COD_LQ <> 0 "&_
+					" GROUP BY l.COD_LQ, l.DESC_LQ, l.FDES_LQ "&_
+					" ORDER BY l.COD_LQ DESC"
+		'' 2) Asignar los resultados de la consulta en las variables correspondientes
+			Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+				nroFilasLeidas = 0
+				WHILE NOT rs.EOF
+					db_COD_LQ = rs.rdoColumns("COD_LQ").Value
+					db_ANIO = rs.rdoColumns("ANIO").Value
+					db_MES = rs.rdoColumns("MES").Value
+					db_DESC_LQ = rs.rdoColumns("DESC_LQ").Value
+					db_TOTAL = rs.rdoColumns("TOTAL").Value
+					db_CANT_DEVUELTO = rs.rdoColumns("CANT_DEVUELTO").Value
+
+					if isnull(db_TOTAL) then db_TOTAL = 0 					else db_TOTAL = cInt(db_TOTAL)	end if
+					if isnull(db_CANT_DEVUELTO) then db_CANT_DEVUELTO = 0 	else db_CANT_DEVUELTO = cInt(db_CANT_DEVUELTO)	end if
+					if isnull(db_MES) then db_MES = ""	end if
+					'' 2.1) Cálculo de porcentajes
+					col_CantRecibosDevueltos 	= ""
+					col_PorcRecibosDevueltos	= ""
+					col_PorcRecibosPendientes	= ""
+
+					if db_TOTAL > 0 then 
+						''mensaje = "total: " & db_TOTAL & vbTab & "-cantDevuelto "& db_CANT_DEVUELTO
+						''msg_onWindow mensaje, msg_Info
+						porcRecibosDevueltos 	= cInt(db_CANT_DEVUELTO) / cInt(db_TOTAL) * 100
+						porcRecibosPendientes 	= (cInt(db_TOTAL) - cInt(db_CANT_DEVUELTO))/ cInt(db_TOTAL) * 100
+												
+						col_CantRecibosDevueltos 	= db_CANT_DEVUELTO & " de " & db_TOTAL
+						col_PorcRecibosDevueltos	= getPorcentaje(porcRecibosDevueltos)
+						col_PorcRecibosPendientes	= getPorcentaje(porcRecibosPendientes)
+					end if
+					''3) Llenar grilla con los valores obtenidos
+					cantFilasGrilla = obj.controles(grilla).filas
+					col_NroFilaGrilla = cantFilasGrilla''cantFilasGrilla + 1
+					obj.controles(grilla).AgregarFila = ""
+					'-- Ingresa en la grilla de Visualización			
+					obj.controles(grilla).ValorCelda("col_COD_LQ", col_NroFilaGrilla)				= db_COD_LQ
+					obj.controles(grilla).ValorCelda("col_DESC_LQ", col_NroFilaGrilla)				= db_DESC_LQ
+					obj.controles(grilla).ValorCelda("col_ANIO", col_NroFilaGrilla)					= db_ANIO
+					obj.controles(grilla).ValorCelda("col_MES", col_NroFilaGrilla)					= db_MES
+					obj.controles(grilla).ValorCelda("col_CantRecibosDevueltos", col_NroFilaGrilla)	= col_CantRecibosDevueltos
+					obj.controles(grilla).ValorCelda("col_PorcRecibosDevueltos", col_NroFilaGrilla)	= col_PorcRecibosDevueltos
+					obj.controles(grilla).ValorCelda("col_PorcRecibosPendientes", col_NroFilaGrilla)= col_PorcRecibosPendientes
+					
+					''4) aumentar cant de filas leídas
+					nroFilasLeidas = nroFilasLeidas + 1
+					rs.MoveNext
+				WEND
+			rs.close
+		'' D) Informar resultados
+		if nroFilasLeidas > 0 then
+			mensaje = getMsgCantResultados(nroFilasLeidas)
+			obj.controles("lblCantFilasGrilla_InformeGral_Liquidacion").Texto = mensaje
+		end if 
+	end function
+
+'' sub grdDevolucion_InformeGral_Liquidacion_RowColChange()
+'' 	obj.controles(nombreGrillaInformeGral_Liquidacion).refControl.Refresh
+'' 	rowselected = obj.controles(nombreGrillaInformeGral_Liquidacion).refControl.Row
+'' 	MsgBox rowselected  
+'' end sub
+''**********************************************************************************************************************************************************************************************************''
+	public function chkVerInformeGral_Liquidacion_Click_Action()
+		dim mensaje
+		chkValor = obj.controles("chkVerInformeGral_Liquidacion").Valor
+
+		if chkValor=0 then
+				obj.controles(nombreGrillaInformeGral_Liquidacion).refControl.Visible = false
+				obj.controles("lblCantFilasGrilla_InformeGral_Liquidacion").refControl.Visible = false
+			else
+				obj.controles(nombreGrillaInformeGral_Liquidacion).refControl.Visible = true
+				obj.controles("lblCantFilasGrilla_InformeGral_Liquidacion").refControl.Visible = true
+				cargarGrillaInformeGral_Liquidacion
+		end if
+	end function
+''**********************************************************************************************************************************************************************************************************''
+	private function mostrarGrillaInformeGral_BajarInformeDetallado(mostrarBoolean)
+		const posX = 60
+		const poslblCant_X 		= 2700
+		const posTitulo_Arriba 	= 3300
+		const posGrilla_Arriba 	= 3660
+
+		const posTitulo_Abajo 	= 9000
+		const posGrilla_Abajo 	= 9360
+		''obj.controles("lblCantFilasGrilla_InformeDetallado")
+		if mostrarBoolean = false then
+				mostrarGrillaInformeGral(false)
+				mostrarGrillaInformeDetallado(true)
+				cambiarPosicion nombreTitulo_GrillaInformeDetallado	, posX, posTitulo_Arriba
+				cambiarPosicion nombreGrillaInformeDetallado 		, posX, posGrilla_Arriba
+				cambiarPosicion nombrelblCantFilasGrilla_InformeDetallado, poslblCant_X, (posTitulo_Arriba + 100)
+			else
+				mostrarGrillaInformeGral(true)
+				mostrarGrillaInformeDetallado(true)
+				''
+				cambiarPosicion nombreTitulo_GrillaInformeGral 	, posX, posTitulo_Arriba
+				cambiarPosicion nombreGrillaInformeGral 		, posX, posGrilla_Arriba
+				'' Bajar grilla detallada
+				cambiarPosicion nombreTitulo_GrillaInformeDetallado , posX, posTitulo_Abajo
+				cambiarPosicion nombreGrillaInformeDetallado 		, posX, posGrilla_Abajo
+				cambiarPosicion nombrelblCantFilasGrilla_InformeDetallado, poslblCant_X, (posTitulo_Abajo + 100)
+		end if
+	end function
+
+''**********************************************************************************************************************************************************************************************************''
+	public function chkVerInformeGral_Click_Action()
+		chkValor = obj.controles("chkVerInformeGral").Valor
+
+		if chkValor=0 then
+				mostrarGrillaInformeGral_BajarInformeDetallado(false)
+			else
+				mostrarGrillaInformeGral_BajarInformeDetallado(true)
+		end if
+	end function
+
+	public function chkBuscarPorSoeid_Click_Action
+		Dim mensaje
+		chkValor = obj.controles("chkBuscarPorSoeid_fltRep").Valor
+		
+		if chkValor=0 then
+			mensaje = "Nro. Legajo (Separados por coma)" '' Vacío = Todos
+			else
+			mensaje = "Ingresar SOEIDs (Separados por coma)"
+		end if
+		obj.Controles("lblNroLegajo_fltRep").Texto = mensaje
+	end function
+''**********************************************************************************************************************************************************************************************************''
+private sub cargarGrillaInformeDetallado_Filtro
+	'' A) Obtener valores cargados en los filtros
+	const formatoFechaDB = "DD/MM/YYYY"
+	grilla = nombreGrillaInformeDetallado
+	chkBuscarPorSoeid 	= obj.controles("chkBuscarPorSoeid_fltRep").Valor
+	txtNroLegajo 		= obj.controles("txtNroLegajo_fltRep").Texto
+	txtResponsable 		= obj.controles("txtResponsable_fltRep").Texto
+	cmbNroLiquidacion	= obj.controles("cmbNroLiquidacion_fltRep").Texto
+
+	if trim(txtNroLegajo)="" AND trim(txtResponsable)="" AND trim(cmbNroLiquidacion)="" then
+		mensaje = "Por favor seleccione algún filtro, para acotar la cantidad de resultados de las solicitudes vacacionales"
+		msg_onWindow  mensaje, msg_Warn
+		exit sub
+	end if 
+
+	obj.controles(grilla).limpiargrilla
+'' B) Preparar query de obtención
+	query = "	SELECT DISTINCT  "&_
+			"		l.COD_LQ AS COD_LQ "&_
+			"		, TO_CHAR(l.FDES_LQ, 'YYYY') AS ANIO "&_
+			"		, TO_CHAR(l.FDES_LQ, 'MM') AS MES "&_
+			"		, l.DESC_LQ "&_
+			"		, COUNT(*) AS TOTAL "&_
+			"		, SUM(CASE  "&_
+			"			WHEN (SELECT COUNT(*) FROM CB_DEVOLUCION_RECIBOS D "&_
+			"				WHERE D.COD_LQ = r.COD_LQ  "&_
+			"				AND r.COD_MF = D.COD_MF)  "&_
+			"					= 0  "&_
+			"				THEN 0 "&_
+			"				ELSE 1  "&_
+			"				END "&_
+			"			) AS CANT_DEVUELTO "&_
+			"		, r.COD_MF "&_
+			"		,(SELECT MAX(mf.NOM_MF) FROM MAEFUNC2 mf  "&_
+			"			WHERE mf.COD_MF = r.COD_MF) AS NOM_MF  "&_
+			"		, s.SOEID AS SOEID "&_
+			"	FROM  "&_
+			"		 CB_SOEID s  "&_
+			"		,LIQUIDAC l  "&_
+			"	RIGHT JOIN CB_RECIBOS r "&_
+			"	ON l.COD_LQ = r.COD_LQ "&_
+			"	WHERE l.COD_LQ <> 0 "&_
+			"	AND r.COD_MF = s.COD_MF "
+
+
+	if trim(txtNroLegajo) <> "" then
+		textoSeparadoPorComaYComilla = getTextoSeparadoPorComaYComilla(txtNroLegajo)
+		if chkBuscarPorSoeid<>0 then
+				query = query & " AND 	s.SOEID IN (" & textoSeparadoPorComaYComilla & ") "
+			else
+				if esSoloNrosCommasSpaces(txtNroLegajo) then
+						query = query & " AND r.COD_MF IN ( " & txtNroLegajo & ")"
+					else
+						mensaje = "En la búsqueda por NroLegajo solo se permiten numeros separados por coma"
+						mensaje = mensaje & vbNewLine & vbNewLine & "También puede intentar con una búsqueda por SOEID"
+						msg_onWindow  mensaje, msg_Warn
+					exit sub
+				end if
+		end if
+	end if
+
+	if trim(cmbNroLiquidacion) <> "" then
+		query = query & " AND l.COD_LQ = " & cmbNroLiquidacion
+	end if 
+
+	query = query &_
+		"	GROUP BY l.COD_LQ, l.DESC_LQ, l.FDES_LQ, r.COD_MF, s.SOEID "&_
+		"	ORDER BY r.COD_MF DESC "
+	''msg_onWindow query, msg_Input
+	Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+
+	nroFilasLeidas = 0
+'' C) Cargar grilla con los valores de la DB
+	WHILE NOT rs.EOF
+	''2) Asignar los resultados de la consulta en las variables correspondientes
+		db_SOEID = rs.rdoColumns("SOEID").Value
+		db_COD_MF = rs.rdoColumns("COD_MF").Value
+		db_NombreApellido = rs.rdoColumns("NOM_MF").Value
+
+		db_MES = rs.rdoColumns("MES").Value
+		db_ANIO = rs.rdoColumns("ANIO").Value
+		db_COD_LQ = rs.rdoColumns("COD_LQ").Value
+		db_DESC_LQ = rs.rdoColumns("DESC_LQ").Value
+		
+		if isnull(db_MES) then db_MES = ""			end if
+		if isnull(db_ANIO) then db_ANIO = ""		end if
+		if isnull(db_DESC_LQ) then db_DESC_LQ = ""	end if
+		if isnull(db_NombreApellido) then db_NombreApellido = ""	end if
+		
+		col_DESC_LQ = db_ANIO&"-"&db_MES&"  "& db_DESC_LQ
+	''3) Llenar grilla con los valores obtenidos
+		cantFilasGrilla = obj.controles(grilla).filas
+		col_NroFilaGrilla = cantFilasGrilla''cantFilasGrilla + 1
+		
+		obj.controles(grilla).AgregarFila = ""
+		'-- Ingresa en la grilla de Visualización			
+		'obj.controles(grilla).ValorCelda("col_Responsable", col_NroFilaGrilla)	= db_Responsable
+		obj.controles(grilla).ValorCelda("col_SOEID", col_NroFilaGrilla)		= db_SOEID	
+		obj.controles(grilla).ValorCelda("col_COD_MF", col_NroFilaGrilla)		= db_COD_MF
+		obj.controles(grilla).ValorCelda("col_NombreApellido", col_NroFilaGrilla)	= db_NombreApellido
+		obj.controles(grilla).ValorCelda("col_COD_LQ", col_NroFilaGrilla)			= db_COD_LQ
+		obj.controles(grilla).ValorCelda("col_DESC_LQ", col_NroFilaGrilla)			= col_DESC_LQ
+		'obj.controles(grilla).ValorCelda("col_FechaDescarga_Primer", col_NroFilaGrilla)	= col_FechaDescarga_Primer
+		'obj.controles(grilla).ValorCelda("col_FechaDescarga_Ultima", col_NroFilaGrilla)	= col_FechaDescarga_Ultima
+		'obj.controles(grilla).ValorCelda("col_FechaDevolucion", col_NroFilaGrilla)		= col_FechaDevolucion
+		'obj.controles(grilla).ValorCelda("col_EstaFirmado", col_NroFilaGrilla)			= col_EstaFirmado
+		'obj.controles(grilla).ValorCelda("col_DevolucionTipoIngreso", col_NroFilaGrilla)= col_DevolucionTipoIngreso
+		'obj.controles(grilla).ValorCelda("col_DevolucionUsuario", col_NroFilaGrilla)	= col_DevolucionUsuario
+	''4) aumentar cant de filas leídas
+		nroFilasLeidas = nroFilasLeidas + 1
+		rs.MoveNext
+	WEND
+	rs.close
+'' D) Informar resultados
+	''TODO: Realizar la carga solo si en la query anterior habían resultados (count)
+	cargarGrillaCon_Responsable(grilla)
+	cargarGrillaCon_FechaDescarga(grilla)
+	cargarGrillaCon_DatosDevolucion(grilla)
+
+	if nroFilasLeidas > 0 then
+			mensaje = getMsgCantResultados(nroFilasLeidas)
+			''msg_onWindow  mensaje, msg_Info
+			obj.controles("frmDevolucionFiltrosReporte").refControl.BackColor = rgb(125, 150, 170)
+			obj.controles("lblCantFilasGrilla_InformeDetallado").Texto = mensaje
+
+		else
+			obj.controles("frmDevolucionFiltrosReporte").refControl.BackColor = rgb(240, 240, 240)
+			obj.controles("lblCantFilasGrilla_InformeDetallado").Texto = "No se encontraron resultados"
+	end if 
+end sub
+
+
+
+
+''**********************************************************************************************************************************************************************************************************''
+
+	private function grdInformeGral_Liquidacion_OnSelectedRow
+		grilla = nombreGrillaInformeGral_Liquidacion
+		filaSeleccionada = obj.controles(grilla).fila
+		col_COD_LQ	= obj.controles(grilla).ValorCelda("col_COD_LQ" , filaSeleccionada)	
+		if col_COD_LQ = "" then	exit function 	end if 
+
+		''msg_onWindow col_COD_LQ, msg_Info
+		obj.controles("cmbNroLiquidacion_fltRep").Texto = col_COD_LQ
+		cargarGrillaInformeDetallado_Filtro
+	end function
