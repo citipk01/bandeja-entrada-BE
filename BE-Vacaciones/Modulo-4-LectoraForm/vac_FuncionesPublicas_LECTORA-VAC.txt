@@ -1,0 +1,2930 @@
+const nombreGrilla 			= "grdPreviExcel_Vacaciones"
+const nombreGrillaReporte 	= "grdReporte_VacacionesSol"
+const nombreGrillaLectora 	= "grdLectora_Previsualizacion"
+const nombreGrillaLectoraReporte = "grdLectora_Reporte"
+const nombre_btnGuardarEnBD = "btnGuardarEnBD"
+const nombreControl_DeshacerCambios 		= "btnDB_DeshacerCambiosGrilla"
+const nombreControl_frmGestionImportacion 	= "frmGestionImportacion"
+const nombreControl_txtEstadoLectora_info 	= "txtEstadoLectora_info"
+const nombreControl_lblCantFilasGrillaLectora 	= "lblCantFilasGrillaLectora"
+const formatoFechaDB = "DD/MM/YYYY"
+const YYYYMMDD = "yyyy-MM-dd"
+const YYYYMMDD_HHmm = "yyyy-MM-dd HH:mm"
+
+const cantColumnasGrillaLectora	= 23''16
+
+
+const is_PENDIENTE_validacion	= 0
+const is_ERROR_NoIgnorable		= 1
+const is_ADVERTENCIA_Ignorable	= 2
+const is_OK_Aprobado			= 3
+const is_OK_RegistradoEnDB		= 4
+const is_OK_RegistradoEnDB_Adv	= 5
+
+		cantErrores_Grilla 		= 0
+		cantAdvertencias_Grilla = 0
+		cantOKAprobado_Grilla 	= 0
+		cantOKDB_Grilla 		= 0
+'' UTILITARIO ══════════════════════════════════════════════════════════════════════════════════════════════════════════''
+	public function  getCurrentDateAsString 
+		formatoFecha = YYYYMMDD_HHmm
+		stringDate = ""
+		'stringDate = Format(Now, 		formatDate)
+		'stringDate = Format(Date, 		formatDate)
+		stringDate = Format(CStr(Now), 	formatoFecha)     
+		getCurrentDateAsString = stringDate
+	end function
+
+	public function  getDateAsString(dateToString) 
+		if isnull(dateToString) then 
+			exit function
+		end if
+		formatoFecha = YYYYMMDD
+		stringDate = ""
+		stringDate = Format(CStr(dateToString), 	formatoFecha)  
+		''stringDate = dateToString.ToString(YYYYMMDD) '', CultureInfo.InvariantCulture
+		getDateAsString = stringDate
+	end function
+
+	public function  getBooleanValue (integerValue) 
+		if integerValue <> 0 or integerValue > 0 then
+				getBooleanValue = true
+			else
+				getBooleanValue = false
+		end if   
+	end function
+
+	public function  getYesNoFromBool (booleanValue) 
+		if booleanValue = true then
+				getYesNoFromBool = "Y"
+			else
+				getYesNoFromBool = "N"
+		end if   
+	end function
+
+	public Function getBooleanValue_Excel(valorATransformar)
+		valorBooleano = true
+
+		select case UCase(Trim(valorATransformar))
+			case "Y", "S", "SI"
+				valorBooleano = true
+			case "N", "N", "NO", "0", ""
+				valorBooleano = false
+		end select
+		
+		getBooleanValue_Excel = valorBooleano
+	End Function
+
+	public function getMsgCantResultados(cantResultados)
+		mensaje = "" 
+		select case Cint(cantResultados)
+			case 0
+				mensaje = "Sin resultados"
+			case 1
+				mensaje = "un solo resultado"
+			case else
+				mensaje = cantResultados & " resultados"
+		end select
+		getMsgCantResultados = mensaje
+	end function
+	
+	public Function esSoloLetras(textoVerificar)
+		Set rex = New RegExp
+		ONLY_LETTERS = "[^a-zA-Z]"
+		rex.Pattern = ONLY_LETTERS
+		esSoloLetras = rex.Test(textoVerificar)
+	End Function
+
+	public Function esSoloNrosCommasSpaces(textoVerificar)
+		Set rex = New RegExp
+		ONLY_NUMBERS = "^[\d \,]*$"
+		ONLY_NUMBERS = "^[(?!\s)\d \,]*$"
+		rex.Pattern = ONLY_NUMBERS
+		resultado = rex.Test(textoVerificar)
+		''mensaje = "resultado REGEX: " & resultado & "   string: " & textoVerificar & " ]"
+		''inputBox "", "", mensaje
+		esSoloNrosCommasSpaces = resultado
+	End Function
+'' UTILITARIO VISUAL ═══════════════════════════════════════════════════════════════════════════════════════════════════''
+	const msg_OK  		= 0
+	const msg_Info  	= 1
+	const msg_Warn  	= 2
+	const msg_Error 	= 3
+	const msg_Question	= 4
+	const msg_Input 	= 5
+	const msg_DB 		= 6
+	const color_DarkBlue= 7
+
+	public function  msg_onWindow (mensaje, tipo)
+		mensajeTitulo = "Aviso-Carga de Vacaciones"'""
+
+		select case tipo
+			case msg_Info
+				msgBox mensaje, vbInformation 	+ vbOkOnly, mensajeTitulo
+
+			case msg_Warn
+				msgBox mensaje, vbExclamation 	+ vbOkOnly, mensajeTitulo
+
+			case msg_Error
+				msgBox mensaje, vbCritical 		+ vbOkOnly, mensajeTitulo
+				
+			case msg_Question
+				answer = msgBox(mensaje ,vbExclamation 	+ vbYesNo , mensajeTitulo)
+				if  answer = vbYes Then
+						msg_onWindow = true
+						exit function
+					else
+						msg_onWindow = false
+						exit function
+				end if
+
+			case msg_Input
+				inputBox mensaje, mensajeTitulo, mensaje
+
+		end select
+		''	
+	end function
+
+
+	sub msg_onFormControl (mensaje, tipo) 
+		reemplazarTexto = true
+		nombreControl_MostrarMensaje		 =	"txtEstadoImportacion_info"
+
+
+		if reemplazarTexto = true then
+			obj.controles(nombreControl_MostrarMensaje).TEXTO =	mensaje
+		else
+			anteriorTexto = obj.controles(nombreControl_MostrarMensaje).TEXTO 
+			textoSeparador = vbNewLine & "____________________________" & vbtab & vbNewLine 
+			obj.controles(nombreControl_MostrarMensaje).TEXTO = mensaje & textoSeparador & anteriorTexto
+		end if
+		''const COLOR_ROJO  	= #c84637 '' rgb (200, 70, 55) 
+		''const COLOR_VERDE	= RGB (0, 155,  80)
+		''const COLOR_AMARILLO= &e1c846& ''RGB (225, 200, 70) ''vbYellow
+		''const COLOR_AZUL	= vbBlue ''RGB (0, 155,  80)
+
+
+		select case tipo
+			case msg_OK
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(10, 150, 15)''rgb(0, 200, 3) 
+			case msg_Info
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(15, 130, 180) ''20, 160, 250
+			case msg_Warn
+				''obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(250, 160, 0)''rgb(225, 200, 70)
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(100, 80, 0)''rgb(225, 200, 70)
+			case msg_Error
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(200, 70, 55)
+			case msg_Question
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(190, 100, 180)
+			case msg_Input
+
+		end select
+		exit sub	
+	end sub
+
+	public function getColorFromTipo(tipo)
+		Dim color
+		select case tipo
+			case msg_OK
+				color = rgb(10, 150, 15)''rgb(0, 200, 3) 
+			case msg_Info
+				color = rgb(15, 130, 180) ''20, 160, 250
+			case msg_Warn
+				color = rgb(100, 80, 0)''rgb(82, 67, 0)''rgb(250, 160, 0)''rgb(225, 200, 70)
+			case msg_Error
+				color = rgb(200, 70, 55)
+			case msg_Question
+				color = rgb(190, 100, 180)
+			case msg_DB
+				color = rgb(40, 150, 140)
+			case msg_DB_Update
+				color = rgb(20, 120, 120)
+			case color_DarkBlue
+				color = rgb(125, 150, 170) '' darkBlue
+			case else
+				color = rgb(240, 240, 240) '' rgb(240, 240, 240) = colorGris_BarraDeMenuWindows
+		end select
+
+		getColorFromTipo = color
+	end function
+
+	public sub cargarFormatoDeControlesForm
+		OBJ.CONTROLES("btnSubirExcel").setFoco() 
+
+		nombreControl_MostrarMensaje		 =	"txtEstadoImportacion_info"
+		obj.controles(nombreControl_MostrarMensaje).Texto 	= ""
+		obj.controles(nombreControl_MostrarMensaje).refControl.Font.Size 	= 10
+		obj.controles(nombreControl_MostrarMensaje).refControl.Font.Bold 	= true
+		obj.controles(nombreControl_MostrarMensaje).refControl.Appearance 	= 0
+		obj.controles(nombreControl_MostrarMensaje).refControl.BorderStyle 	= 0   
+		
+		obj.controles(nombre_btnGuardarEnBD).Visible	= false
+		obj.controles(nombre_btnGuardarEnBD).Habilitado	= false
+		obj.controles(nombreControl_DeshacerCambios).Visible	= false
+		obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
+
+		obj.controles("flt_chkSoloCargaMasiva").Valor 	= 1
+		obj.controles("flt_chkBuscarPorSoeid").Valor 	= 1
+		obj.controles("flt_chkBuscarPorSoeid").setFoco()
+
+		
+		''screenwidth = Screen.Width \ Screen.TwipsPerPixelX
+		''screenheight = Screen.Height \ Screen.TwipsPerPixelY
+		mensaje = "Bienvenido!" &vbNewLine&vbNewLine& "Si desea guardar las observaciones de la importación, recuerde cerrar el archivo Excel antes de subirlo. Gracias!"
+		msg_onFormControl mensaje, msg_Info
+
+		'' 2020: Lectora de formularios de solicitud vacaciones
+		obj.controles(nombreControl_txtEstadoLectora_info).refControl.Font.Size	= 10
+		obj.controles(nombreControl_txtEstadoLectora_info).refControl.Text 	= ""
+		obj.controles("chkBuscarPorSoeid_fltRep").Valor = 1
+		obj.controles("lblPrevisualizacionForm").refControl.Font.Size = 15
+		obj.controles("btnDBActualizarFormVac").refControl.Visible = false
+		obj.controles("chkIngresoAutomatico").Valor = 1
+		obj.Fichas(7).SetFoco() ''"LectoraDeFormularios"
+		obj.controles("txtCodFormularioLeido").setFoco()
+		''obj.EnviarMensaje "PORTAL","Asunto mensaje","Este es el Mensaje"
+		''mostrarFichas()
+	end sub
+
+	private function mostrarFichas()
+		i = 1
+		WHILE i<>3
+			mensaje = i & ": " & obj.Fichas(i).Texto
+			inputBox "","", mensaje
+			i = i + 1
+		WEND
+	end function
+
+	public function pintarFilaDeRojo (nroFila)
+		cantColumnasGrilla = 15
+		obj.Controles(nombreGrilla).refControl.Cell(7, (nroFila),0,(nroFila),cantColumnasGrilla) = rgb(200, 70, 55) ''vbRed
+	end function
+
+	public function pintarFila(nroFila, tipo)
+		cantColumnasGrilla = 15
+		Dim color
+		select case tipo
+			case msg_OK
+				color = rgb(10, 150, 15)''rgb(0, 200, 3) 
+			case msg_Info
+				color = rgb(15, 130, 180) ''20, 160, 250
+			case msg_Warn
+				color = rgb(100, 80, 0)''rgb(82, 67, 0)''rgb(250, 160, 0)''rgb(225, 200, 70)
+			case msg_Error
+				color = rgb(200, 70, 55)
+			case msg_Question
+				color = rgb(190, 100, 180)
+			case msg_DB
+				color = rgb(40, 150, 140)
+			case msg_DB_Update
+				color = rgb(20, 120, 120)
+				
+		end select
+		obj.Controles(nombreGrilla).refControl.Cell(7, (nroFila),0,(nroFila),cantColumnasGrilla) = color
+	end function
+
+	public function pintarFilaGrilla(nroFila, tipo, nombreGrilla, cantColumnasGrilla)
+		''cantColumnasGrilla = 15
+		Dim color
+		select case tipo
+			case msg_OK
+				color = rgb(10, 150, 15)''rgb(0, 200, 3) 
+			case msg_Info
+				color = rgb(15, 130, 180) ''20, 160, 250
+			case msg_Warn
+				color = rgb(100, 80, 0)''rgb(82, 67, 0)''rgb(250, 160, 0)''rgb(225, 200, 70)
+			case msg_Error
+				color = rgb(200, 70, 55)
+			case msg_Question
+				color = rgb(190, 100, 180)
+			case msg_DB
+				color = rgb(40, 150, 140)
+			case msg_DB_Update
+				color = rgb(20, 120, 120)
+				
+		end select
+		obj.Controles(nombreGrilla).refControl.Cell(7, (nroFila),0,(nroFila),cantColumnasGrilla) = color
+	end function
+
+	public function cambiarPosicion(nombreControl, ejeX_LEFT, ejeY_TOP)
+		obj.controles(nombreControl).refControl.Left 	= ejeX_LEFT
+		obj.controles(nombreControl).refControl.Top 	= ejeY_TOP
+	end function
+
+
+	public Function mostrarMensajeErrorGral(cantErroresEncontrados, msgTipoError)
+		mensaje = "Hay errores en el archivo que deben ser resueltos para habilitar la importación"  & vbNewLine & vbNewLine & "Por favor, verifique las causas en la columna de Observaciones"
+		''msg_onWindow 	mensaje, msg_Warn
+		msg_onWindow 	mensaje, msg_Error
+		
+		if cantErroresEncontrados = 1 then
+			mensaje = msgTipoError & vbNewLine & "Se encontró "  		& cantErroresEncontrados & " error" 
+		else
+			mensaje = msgTipoError & vbNewLine & "Se encontraron "  	& cantErroresEncontrados & " errores"
+		end if 
+
+		mensaje = msgCantFilasLeidas & vbNewLine & mensaje
+		msg_onFormControl	mensaje, msg_Error
+	End Function
+'' FUNCIONES PÚBLICAS ══════════════════════════════════════════════════════════════════════════════════════════════════''
+	Public Function LeftPadZeros(strZeros) 
+		intCounter = 0
+		cantCeros = 10
+
+		intCounter = cantCeros - Len(strZeros)
+		strZeros = String(intCounter, "0") & strZeros
+		LeftPadZeros = strZeros
+
+	End Function
+
+'' ************************************************************************************************************************
+'' ************************************************************************************************************************
+'' ************************************************************************************************************************
+	public function existenLosNroLegajo_Empresa_DB
+		existenTodosLosRegistros = true
+		cantFilasGrilla = obj.controles(nombreGrilla).filas
+		'Verificar existencia deel nroLegajo cargado'
+		FOR i=0 TO (cantFilasGrilla - 1)
+			col_COD_MF = obj.controles(nombreGrilla).ValorCelda("col_COD_MF", i)  
+
+			query =	" SELECT COUNT(*) FROM MAEFUNC2" &_
+					" WHERE COD_MF = " & col_COD_MF
+			''msg_onWindow query, msg_Input 
+			Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+			IF NOT rs.EOF THEN
+				existeRegistro_NroLegajo = false
+
+				if rs.rdoColumns(0).Value = 0 then
+					msgObservacion = "El legajo no fue encontrado en los registros de empleados (MAEFUNC2)"
+					existenTodosLosRegistros = false
+				else
+					msgObservacion = ""''"OK-LegajoExistente"
+					existeRegistro_NroLegajo = true
+				end if 
+				'' 'Verificar existencia de la empresa cargada'
+				'' if existeRegistro_NroLegajo then
+				'' 	col_COD_EMP = obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i)  
+				'' 	query =	" SELECT COUNT(*) FROM QSEMPRESA" &_
+				'' 			" WHERE COD_EMP = " & col_COD_EMP
+				'' 	''msg_onWindow query, msg_Input 
+				'' 	set rs_empresa = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+				'' 	if rs_empresa.rdoColumns(0).Value = 0 then
+				'' 		msgObservacion = "La empresa no fue encontrada en los registros (QSEMPRESA)"
+				'' 		existenTodosLosRegistros = false
+				'' 	else
+				'' 		msgObservacion = "OK-Falta validar fechas"
+				'' 	end if 
+				'' 	rs_empresa.close
+				'' end if
+			END IF
+			rs.close
+
+			obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+		NEXT
+		
+		existenLosNroLegajo_Empresa_DB = existenTodosLosRegistros
+	end function
+
+	public function cantErroresValidacionFechasSolicitadas
+		cantErroresEncontrados = 0
+		huboErroresValidacion = false
+		cantFilasGrilla = obj.controles(nombreGrilla).filas
+		'Verificar que las fechas sean válidas'
+		nroLegajoAnt 	= 0
+		periodoAnt 		= 0
+		total_cantDiasSolicitadosPorLegajo = 0 
+		total_cantSolicitudes_EmpleadoPeriodo = 0
+		completoCantDiasPeriodoAnterior = false
+
+		FOR i=0 TO (cantFilasGrilla - 1)
+			huboErroresValidacion = false
+			huboErroresValidacionAdvertencia = false
+			cantAdvertenciasPorFila = 0
+			'0) Obtiene las fechas de la grilla de previsualización'
+				col_COD_MF		= obj.controles(nombreGrilla).ValorCelda("col_COD_MF" , i)		
+				col_PERIODO		= obj.controles(nombreGrilla).ValorCelda("col_PERIODO", i)		
+				col_COD_EMP		= obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i)		
+				col_FEC_INI		= obj.controles(nombreGrilla).ValorCelda("col_FEC_INI", i)		
+				col_FEC_FIN		= obj.controles(nombreGrilla).ValorCelda("col_FEC_FIN", i)		
+				cantDiasSolicitados		= CInt(obj.controles(nombreGrilla).ValorCelda("col_CantDias", i))		
+				col_PERIODO		= CDate(Format(CStr(col_PERIODO), formatoFechaDB))
+				col_FEC_INI		= CDate(Format(CStr(col_FEC_INI), formatoFechaDB))
+				col_FEC_FIN		= CDate(Format(CStr(col_FEC_FIN), formatoFechaDB))
+				col_COD_MF 		= LeftPadZeros(col_COD_MF)
+			'1) Blanquear los totales y Verificar que la grilla se encuentre ordenada por COD_MF y PERIODO'
+				if col_COD_MF <> nroLegajoAnt then 
+						if nroLegajoAnt > col_COD_MF  then 
+							msgObservacion = "Error: Excel-Los registros deben estar ordenados por legajo y periodo ascendente"
+							obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+							obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ERROR_NoIgnorable
+							pintarFilaDeRojo(i+1)
+							cantErroresValidacionFechasSolicitadas = 999
+							exit function
+						end if 
+						'Reasignación para siguiente empleado'
+						nroLegajoAnt 	= col_COD_MF
+						periodoAnt 		= col_PERIODO
+						total_cantSolicitudes_EmpleadoPeriodo 	= 0
+						total_cantDiasSolicitadosPorLegajo		= cantDiasSolicitados
+						completoCantDiasPeriodoAnterior = false
+					else
+						'Mismo empleado, mismo periodo'
+						if col_PERIODO = periodoAnt then 
+							total_cantDiasSolicitadosPorLegajo		= total_cantDiasSolicitadosPorLegajo 	+ cantDiasSolicitados
+							total_cantSolicitudes_EmpleadoPeriodo 	= total_cantSolicitudes_EmpleadoPeriodo + 1
+							completoCantDiasPeriodoAnterior = false
+
+						else 
+							''mensaje = "periodoAnt: " &periodoAnt & "   - col_PERIODO: "& col_PERIODO
+							''msg_onWindow mensaje, msg_Input
+							if CDate(periodoAnt) > col_PERIODO  then 
+								msgObservacion = "Error: Excel-Los registros deben estar ordenados por legajo y periodo ascendente"
+								obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+								obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ERROR_NoIgnorable
+								pintarFilaDeRojo(i+1)
+								cantErroresValidacionFechasSolicitadas = 999
+								exit function
+							end if 
+
+							total_cantSolicitudes_EmpleadoPeriodo 	= 0
+							total_cantDiasSolicitadosPorLegajo		= cantDiasSolicitados
+							periodoAnt 		= col_PERIODO
+
+						end if 
+				end if 
+
+			'2) Verifica que exista un registro en la tabla de cabecera CB_VAC'
+				obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i) = getCodEmpresa(col_COD_MF)
+				col_COD_EMP		= obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i)
+				if not existeRelacionLegajoPeriodo_CB_VAC(col_COD_MF, col_PERIODO, col_COD_EMP) then 
+					msgObservacion = "Error: No se generaron los días calculados para este periodo: " & col_PERIODO & "   -Revisar existencia de registro en CB_VAC"
+					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ERROR_NoIgnorable
+					huboErroresValidacion = true
+				end if 
+
+			'3) Verifica que las fechas solicitadas no se superpongan y que sean válidas'
+				'3.1) Valida con los registros existentes en la Base de Datos'
+				haySuperposicionDB = verificarSuperposicionFechaDB(col_COD_MF, col_PERIODO, col_FEC_INI, col_FEC_FIN)
+
+				if haySuperposicionDB = true AND huboErroresValidacion=false then
+					msgObservacion = "Error: Hay una superposición de días solicitados para las fechas: " &col_FEC_INI& " al " &col_FEC_FIN
+					msgObservacion = msgObservacion & vbNewLine & "Revise las fechas de las vacaciones ya registradas en Buxis"
+					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ERROR_NoIgnorable
+					huboErroresValidacion = true
+				end if
+
+				'3.2) Si hay más de una solicitud (fila excel), Compara con el resto de las filas del excel que estén relacionadas al empleado'
+				if total_cantSolicitudes_EmpleadoPeriodo > 0 then
+					for j=1 TO total_cantSolicitudes_EmpleadoPeriodo
+						col_FEC_INI_Ant = obj.controles(nombreGrilla).ValorCelda("col_FEC_INI", i-j)	
+						col_FEC_FIN_Ant = obj.controles(nombreGrilla).ValorCelda("col_FEC_FIN", i-j)
+						haySuperposicionGrilla = verificarSuperposicionFechaGrilla(col_FEC_INI, col_FEC_FIN, col_FEC_INI_Ant, col_FEC_FIN_Ant)
+						if haySuperposicionGrilla = true AND huboErroresValidacion=false then
+							msgObservacion = "Error: Hay una superposición de fechas en el Excel. Fechas solicitadas: " &col_FEC_INI& "  a  " &col_FEC_FIN
+							obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+							obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ERROR_NoIgnorable
+							huboErroresValidacion = true
+						end if
+					next
+				end if
+
+			'4) Verifica que no se haya superado la fragmentación de las vacaciones'
+
+
+				saldoDeFragmentacion	= getFromDB_saldoDeFragmentacionDisponible(col_COD_MF, col_PERIODO)
+				''mensaje = "MAX_FRAG: " & saldoDeFragmentacion & " - cantSol: "&total_cantSolicitudes_EmpleadoPeriodo
+				''msg_onWindow mensaje, msg_Info
+				if total_cantSolicitudes_EmpleadoPeriodo > saldoDeFragmentacion AND huboErroresValidacion=false then
+					msgObservacion = "No se puede seguir fragmentando las vacaciones porque supera el límite disponible: " & saldoDeFragmentacion
+					msgObservacion = "Atención: Las vacaciones solicitadas están superando el máximo de fragmentaciones disponibles : " & saldoDeFragmentacion
+					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
+					huboErroresValidacionAdvertencia = true
+					cantAdvertenciasPorFila = cantAdvertenciasPorFila + 1
+				end if 
+
+			'5) Realiza el cálculo de días que se están solicitando y descuenta el saldo disponible (No en la DB)'
+				'5.0) Avisar que las vacaciones comienzan a futuro del mes de pago'
+				cantDiferenciaDeMeses = DateDiff("m", getCurrentDateAsString, col_FEC_INI)
+				if cantDiferenciaDeMeses <> 0 and huboErroresValidacion=false then
+					if cantDiferenciaDeMeses > 0 then 
+						msgObservacion = "Atención: Se están solicitando vacaciones que no corresponden al mes corriente de pago (Son anteriores o posteriores a futuro)"
+						msgObservacion = "Atención: Se están solicitando vacaciones a futuro y no corresponden al mes corriente de pago. Cant. de meses posteriores: " & cantDiferenciaDeMeses ''& col_FEC_INI
+						obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+						obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
+						huboErroresValidacionAdvertencia = true
+						cantAdvertenciasPorFila = cantAdvertenciasPorFila + 1
+					end if
+				end if
+
+				'5.1) Verifica si quedan días pendientes en el periodo anterior o si los está solicitando en esta importación de Excel'
+				periodoAnterior = DateAdd("yyyy", -1, col_PERIODO) 
+				cantDiasDisponiblesAnterior = getFromDB_cantDiasDisponibles(col_COD_MF, periodoAnterior)
+				if cantDiasDisponiblesAnterior > 0 and completoCantDiasPeriodoAnterior = false AND huboErroresValidacion=false AND not huboErroresValidacionAdvertencia then 
+						msgObservacion = "Atención: Aún quedan días pendientes de goce del periodo anterior: " & periodoAnterior
+						obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+						obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
+						huboErroresValidacionAdvertencia = true
+						cantAdvertenciasPorFila = cantAdvertenciasPorFila + 1
+				end if
+
+				'5.2) Obtiene el saldo de la cant días disponibles para tomarse'
+				''cantDiasSolicitados = DateDiff("d", col_FEC_INI, col_FEC_FIN)
+				''obj.controles(nombreGrilla).ValorCelda("col_CantDias", i) = cantDiasSolicitados
+				cantDiasDisponibles = getFromDB_cantDiasDisponibles(col_COD_MF, col_PERIODO)
+				
+				if total_cantDiasSolicitadosPorLegajo = cantDiasDisponibles  then  
+					completoCantDiasPeriodoAnterior = true
+				end if
+
+				if (total_cantDiasSolicitadosPorLegajo > cantDiasDisponibles)  AND huboErroresValidacion=false  then 
+					msgObservacion = "Error: Se está superando la toma de los días disponibles para el periodo : " & col_PERIODO 
+					msgObservacion = msgObservacion & vbNewLine & " cantDías Disponibles: " & cantDiasDisponibles & " - cant Solicitada: " & total_cantDiasSolicitadosPorLegajo
+					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+					huboErroresValidacion = true
+					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ERROR_NoIgnorable
+				end if
+
+
+				if  laFechaCaeUnLunes(col_FEC_INI) =false  AND huboErroresValidacion=false AND not huboErroresValidacionAdvertencia then 
+					msgObservacion = "Atención: Las vacaciones comienzan un " & getNombreDiaFecha(col_FEC_INI) & " en vez de Lunes. Revise la fecha de inicio " & col_FEC_INI
+					''msgObservacion = msgObservacion  & vbNewLine & "CaeLunes: "& laFechaCaeUnLunes(col_FEC_INI) & "huboErroresValidacion: " & huboErroresValidacion
+					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+					huboErroresValidacionAdvertencia = true
+					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
+					cantAdvertenciasPorFila = cantAdvertenciasPorFila + 1
+				end if
+
+				
+
+			'Informar resultados de cada fila de la grilla que fue procesada'
+
+				if not huboErroresValidacion AND not huboErroresValidacionAdvertencia then
+						msgObservacion = "OK"''"OK: Validación de fechas solicitadas"
+						''obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i) = getCodEmpresa(col_COD_MF)
+						obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+						obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_OK_Aprobado
+						pintarFila i+1, msg_Info
+						''cantErroresEncontrados = 0
+					else
+						col_EstadoImportacion = obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+						if  isnull(col_EstadoImportacion) OR cint(col_EstadoImportacion) = is_ERROR_NoIgnorable  then 
+								pintarFilaDeRojo(i+1)
+							else
+								if cint(col_EstadoImportacion) = is_ADVERTENCIA_Ignorable then
+									pintarFila i+1, msg_Warn
+
+									if cantAdvertenciasPorFila > 1 then
+										msgObservacion = obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i)
+										obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = "*ADVERTENCIAS ENCONTRADAS*: " & cantAdvertenciasPorFila & "__"& msgObservacion
+									end if 
+								end if 
+						end if 
+						cantErroresEncontrados = cantErroresEncontrados + 1 
+				end if
+				''col_IgnorarError
+		NEXT
+		
+
+		cantErroresValidacionFechasSolicitadas = cantErroresEncontrados
+	end function
+
+'' FUNCIONES PÚBLICAS: Con DB ════════════════════════════════════════════════════════════════════════════════════════════════''
+	public function getFromDB_saldoDeFragmentacionDisponible(col_COD_MF, col_PERIODO)
+		cantDisponible = 0
+
+		query =	" SELECT (MAX_FRAG) AS FRAG_A_TOMAR	" 			&_
+				"         , (	" 								&_
+				"         	SELECT COUNT(*) FROM CB_VAC_SOL	" 	&_
+				"         	WHERE COD_MF =  v.COD_MF	" 		&_
+				"         	AND PERIODO = v.PERIODO	" 			&_
+				"         	) AS CANT_FRAG_TOMADAS	" 			&_
+				" FROM CB_VAC v    	" &_
+				" WHERE COD_MF = '" 		& col_COD_MF  & "'" &_
+				" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')"
+
+		''msg_onWindow query, msg_Input
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+		IF NOT rs.EOF THEN
+				cantFragTomar 	= rs("FRAG_A_TOMAR").Value
+				cantFragTomadas = rs("CANT_FRAG_TOMADAS").Value
+				cantDisponible 	= CInt(cantFragTomar) - CInt(cantFragTomadas)
+		END IF
+		rs.close
+
+		getFromDB_saldoDeFragmentacionDisponible = cantDisponible
+	end function
+
+	public function getFromDB_cantDiasDisponibles(col_COD_MF, col_PERIODO)
+		const formatoFechaDB = "DD/MM/YYYY"
+		cantDiasDisponibles = 0
+
+		query =	" SELECT MAX(DIAS_CALCULADOS) FROM CB_VAC "&_
+				" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+				" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')"
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+		IF NOT rs.EOF THEN
+				cantDiasDisponibles = rs(0).Value
+		END IF
+		rs.close
+
+		getFromDB_cantDiasDisponibles = cantDiasDisponibles
+	end function
+
+	public function existeRelacionLegajoPeriodo_CB_VAC(col_COD_MF, col_PERIODO, col_COD_EMP)
+		const formatoFechaDB = "DD/MM/YYYY"
+		tieneRegistrosCabecera = false
+
+		query =	" SELECT COUNT(*) FROM CB_VAC "&_
+				" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+				" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" &_
+				" AND COD_EMP = " 			& col_COD_EMP 
+
+		''msg_onWindow query, msg_Input
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+		IF NOT rs.EOF THEN
+				if rs(0).Value <> 0 then
+					tieneRegistrosCabecera = true
+				else
+					tieneRegistrosCabecera = false
+			end if
+		END IF
+		rs.close
+
+		existeRelacionLegajoPeriodo_CB_VAC = tieneRegistrosCabecera
+	end function
+
+	public function getCodEmpresa(col_COD_MF)
+		codEmpresaObtenido = 0
+
+		query =	" SELECT COD_EMP FROM MAEFUNC2 "&_
+				" WHERE  COD_MF = '" & col_COD_MF  & "'"
+
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+		IF NOT rs.EOF THEN
+				codEmpresaObtenido = rs(0).Value
+		END IF
+		rs.close
+
+		getCodEmpresa = codEmpresaObtenido 
+	end function
+
+	public function getFromDB_cantDiasDisponibles(col_COD_MF, col_PERIODO)
+		const formatoFechaDB = "DD/MM/YYYY"
+		cantDiasDisponibles = 0
+
+		query =	" SELECT (DIAS_CALCULADOS - DIAS_TOMADOS) " &_
+				" FROM CB_VAC "	&_
+				" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+				" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')"
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+		IF NOT rs.EOF THEN
+				cantDiasDisponibles = rs(0).Value
+		END IF
+		rs.close
+
+		getFromDB_cantDiasDisponibles = cantDiasDisponibles
+	end function
+
+	public function getFromDB_quedanDiasDisponiblesAnteriorPeriodo(col_COD_MF, col_PERIODO)
+		quedanDiasDel_AnteriorPeriodo = false
+
+		anioPeriodo = Year(col_PERIODO) ''Format(CStr(PERIODO), "yyyy")
+		query =	" SELECT COUNT(*) AS CHKHAYDIAS_DISPONIBLES" &_
+				" FROM CB_VAC v" &_
+				" WHERE EXTRACT(YEAR from PERIODO) = " &anioPeriodo& " - 1" &_
+				" AND COD_MF = " & col_COD_MF &_
+				" AND DIAS_CALCULADOS - DIAS_TOMADOS > 0" 
+
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+		IF NOT rs.EOF THEN
+			if rs(0).Value <> 0 then
+					quedanDiasDel_AnteriorPeriodo = false
+				else
+					quedanDiasDel_AnteriorPeriodo = true
+			end if
+		END IF
+		rs.close
+
+		getFromDB_quedanDiasDisponiblesAnteriorPeriodo = quedanDiasDel_AnteriorPeriodo
+		''return quedanDiasDel_AnteriorPeriodo
+	end function
+
+
+	public function quedaronDiasTomadosEnNegativo(col_COD_MF, col_PERIODO)
+		const formatoFechaDB = "DD/MM/YYYY"
+		existenDiasNegativos = false
+
+		query =	" SELECT COUNT(*) FROM CB_VAC "&_
+				" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+				" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" &_
+				" AND DIAS_TOMADOS < 0"
+
+		''msg_onWindow query, msg_Input
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+		IF NOT rs.EOF THEN
+				if rs(0).Value = 0 then
+					existenDiasNegativos = true
+				else
+					existenDiasNegativos = false
+			end if
+		END IF
+		rs.close
+
+		quedaronDiasTomadosEnNegativo = existenDiasNegativos
+	end function
+
+	public function verificarSuperposicionFechaDB(col_COD_MF, col_PERIODO, col_FEC_INI, col_FEC_FIN)
+		haySuperposicion = false
+
+		query =	" SELECT COUNT(*) FROM CB_VAC_SOL "&_
+				" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+				" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" &_
+				" AND (FEC_INI BETWEEN TO_DATE('"& col_FEC_INI & "', '"&formatoFechaDB&"') AND TO_DATE('"& col_FEC_FIN & "', '"&formatoFechaDB&"')" &_
+				" 	OR" &_
+				" 	FEC_FIN BETWEEN TO_DATE('" 	& col_FEC_INI & "', '"&formatoFechaDB&"') AND TO_DATE('"& col_FEC_FIN & "', '"&formatoFechaDB&"')" &_
+				" 	OR " &_
+				" 	(FEC_INI < TO_DATE('" 	& col_FEC_INI & "', '"&formatoFechaDB&"') AND FEC_FIN > TO_DATE('"& col_FEC_FIN & "', '"&formatoFechaDB&"'))" &_
+				" 	OR " &_
+				" 	(FEC_INI > TO_DATE('" 	& col_FEC_INI & "', '"&formatoFechaDB&"') AND FEC_FIN < TO_DATE('"& col_FEC_FIN & "', '"&formatoFechaDB&"'))" &_
+				" )" 
+
+		''msg_onWindow query, msg_Input
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+		IF NOT rs.EOF THEN
+			if rs(0).Value <> 0 then
+					haySuperposicion = true
+			end if
+		END IF
+		rs.close
+
+		verificarSuperposicionFechaDB = haySuperposicion
+	end function
+
+
+
+	public function verificarSuperposicionFechaGrilla(col_FEC_INI, col_FEC_FIN, col_FEC_INI_Ant, col_FEC_FIN_Ant)
+		''mensaje = "" &_
+		''	vbNewLine & "col_FEC_INI		: " & col_FEC_INI		&_
+		''	vbNewLine & "col_FEC_FIN		: " & col_FEC_FIN		&_
+		''	vbNewLine & "col_FEC_INI_Ant	: " & col_FEC_INI_Ant	&_		
+		''	vbNewLine & "col_FEC_FIN_Ant	: " & col_FEC_FIN_Ant			
+		''msg_onWindow mensaje, msg_Info
+		col_FEC_INI = CDate(Format(CStr(col_FEC_INI)		, formatoFechaDB))
+		col_FEC_FIN = CDate(Format(CStr(col_FEC_FIN)		, formatoFechaDB))
+		col_FEC_INI_Ant = CDate(Format(CStr(col_FEC_INI_Ant), formatoFechaDB))
+		col_FEC_FIN_Ant = CDate(Format(CStr(col_FEC_FIN_Ant), formatoFechaDB))
+
+
+		haySuperposicion = false
+		
+		if col_FEC_INI = col_FEC_INI_Ant then
+				haySuperposicion = true
+		end If  
+		if col_FEC_INI >= col_FEC_INI_Ant and col_FEC_INI <= col_FEC_FIN_Ant then
+				haySuperposicion = true
+		end If  
+		
+		if col_FEC_FIN >=  col_FEC_INI_Ant AND col_FEC_FIN <= col_FEC_FIN_Ant then
+				haySuperposicion = true
+		end If  
+
+		if col_FEC_INI < col_FEC_INI_Ant AND col_FEC_FIN > col_FEC_FIN_Ant then
+				haySuperposicion = true
+		end If  
+
+		if col_FEC_INI > col_FEC_INI_Ant AND col_FEC_FIN < col_FEC_FIN_Ant then
+				haySuperposicion = true
+		end If  
+
+
+		verificarSuperposicionFechaGrilla = haySuperposicion
+	end function
+
+
+	public function laFechaCaeUnLunes(col_FEC_INI)
+		esUnLunes = false
+		if vbMonday = WeekDay(col_FEC_INI) then 
+			esUnLunes = true
+		end if
+		''mensaje = "Weekday: " & WeekDay(col_FEC_INI) & "    esUnLunes: "& esUnLunes
+		''msg_onWindow	mensaje, msg_Info
+		laFechaCaeUnLunes = esUnLunes
+	end function
+
+	public function getNombreDiaFecha(col_FEC_INI)
+		nombreDiaSemana = ""
+		''WeekdayName(WeekDay(col_FEC_INI))
+		select case WeekDay(col_FEC_INI)
+			case vbSunday		,1
+				nombreDiaSemana = "Domingo"
+			case vbMonday		,2
+				nombreDiaSemana = "Lunes"
+			case vbTuesday		,3
+				nombreDiaSemana = "Martes"
+			case vbWednesday	,4
+				nombreDiaSemana = "Miércoles"
+			case vbThursday		,5
+				nombreDiaSemana = "Jueves"
+			case vbFriday		,6
+				nombreDiaSemana = "Viernes"
+			case vbSaturday		,7
+				nombreDiaSemana = "Sábado"
+		end select
+		getNombreDiaFecha = nombreDiaSemana
+	end function
+
+	public function cargarGrillaCon_NombreApellido_SOEID(nombreGrillaACargar)
+
+		cantFilasGrilla = obj.controles(nombreGrillaACargar).filas
+		FOR i=0 TO (cantFilasGrilla - 1)
+				db_NombreApellido	= ""
+				db_SOEID			= ""
+				col_COD_MF = obj.controles(nombreGrillaACargar).ValorCelda("col_COD_MF", i)  
+
+				query =	" SELECT mf.NOM_MF AS NOM_MF " &_
+						"     ,( SELECT MAX(SOEID) FROM CB_SOEID s " &_
+						"         WHERE s.COD_MF = mf.COD_MF ) AS SOEID " &_
+						" FROM MAEFUNC2 mf  " &_
+						" WHERE mf.COD_MF =  " & col_COD_MF
+
+				''msg_onWindow query, msg_Input
+				Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+					if not rs.EOF then
+							db_NombreApellido	= rs.rdoColumns("NOM_MF").Value
+							db_SOEID			= rs.rdoColumns("SOEID").Value
+					end if
+				rs.close
+
+				if isnull(db_SOEID) or db_SOEID = "" then   
+					db_SOEID			= ""
+				end if
+				if isnull(db_NombreApellido) or db_NombreApellido = "" then   
+					db_NombreApellido			= ""
+				end if
+				
+				obj.controles(nombreGrillaACargar).ValorCelda("col_NombreApellido", i)	= db_NombreApellido		
+				obj.controles(nombreGrillaACargar).ValorCelda("col_SOEID", i)			= db_SOEID		
+		NEXT
+
+	end function
+
+	public function aprobarCadaFilaObservaciones
+		cantFilasGrilla = obj.controles(nombreGrilla).filas
+		for i=0 TO (cantFilasGrilla - 1)
+			obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = "OK: Aprobado - Listo para guardar en BBDD"
+		next
+	end function
+
+	private function mostrarDetalleReporte(habilitarControles)
+		nombreControl_Contenedor		 =	"frm_RepDetalleSolVac"
+		nombreControl_MostrarDetalle	 =	"txtReporteDetalleSolVac"
+		if habilitarControles then 
+		obj.controles(nombreControl_Contenedor).Habilitado = true
+		obj.controles(nombreControl_MostrarDetalle).Habilitado = true
+		obj.controles(nombreControl_Contenedor).Visible = true
+		obj.controles(nombreControl_MostrarDetalle).Visible = true
+		obj.controles(nombreControl_MostrarDetalle).Texto 	= ""
+		obj.controles(nombreControl_MostrarDetalle).refControl.Font.Size 	= 10
+		obj.controles(nombreControl_MostrarDetalle).refControl.Font.Bold 	= true
+		obj.controles(nombreControl_MostrarDetalle).refControl.Appearance 	= 0
+		obj.controles(nombreControl_MostrarDetalle).refControl.BorderStyle 	= 0 
+
+		mensaje = 	"Periodo			"&vbNewLine&_
+					"Empresa:           "&vbNewLine&_
+					"Legajo:	  		"&vbNewLine&_
+					"Fragmentación Max:	"&vbNewLine&_
+					"Días Arrastre:		"&vbNewLine&_
+					"Días Calculados:	"&vbNewLine&_
+					"Días Totales:		"&vbNewLine&_
+					"Días Tomados:		"&vbNewLine&_
+					"Días Restantes:	"
+			obj.controles(nombreControl_MostrarDetalle).Texto 	= mensaje
+			
+		else
+			obj.controles(nombreControl_Contenedor).Habilitado = false
+			obj.controles(nombreControl_Contenedor).Visible = false
+			obj.controles(nombreControl_MostrarDetalle).Habilitado = false
+			obj.controles(nombreControl_MostrarDetalle).Visible = false
+		end if 
+	end function
+
+	public function grdReporte_VacacionesSol_OnSelectedCell
+		filaSeleccionada = obj.controles(nombreGrillaReporte).fila
+		col_COD_MF		= obj.controles(nombreGrillaReporte).ValorCelda("col_COD_MF" , filaSeleccionada)		
+		col_PERIODO		= obj.controles(nombreGrillaReporte).ValorCelda("col_PERIODO", filaSeleccionada)		
+		col_COD_EMP		= obj.controles(nombreGrillaReporte).ValorCelda("col_COD_EMP", filaSeleccionada)
+		if col_PERIODO = "" then	
+			mostrarDetalleReporte(false)	
+			exit function
+		end if 
+		col_PERIODO		= CDate(Format(CStr(col_PERIODO), formatoFechaDB))
+		''col_COD_MF 		= LeftPadZeros(col_COD_MF)
+
+		mostrarDetalleReporte(true)
+
+		query = "SELECT V.COD_MF, V.PERIODO, V.LAST_USR, V.LAST_HOST"	&_
+				"     , V.DIAS_ARRASTRE, V.DIAS_CALCULADOS "	&_
+				"     ,(V.DIAS_ARRASTRE + V.DIAS_CALCULADOS) AS DIAS_TOTALES"	&_
+				"     , V.MAX_FRAG, V.DIAS_TOMADOS"	&_
+				"     , ((V.DIAS_ARRASTRE + V.DIAS_CALCULADOS) - V.DIAS_TOMADOS) AS DIAS_RESTANTES"	&_
+				"     , ((V.DIAS_ARRASTRE + V.DIAS_CALCULADOS) - S.DIAS_SOLICITADOS) AS DIAS_RESTANTES_SOL"	&_
+				"     , S.DIAS_SOLICITADOS "	&_
+				" FROM CB_VAC V, ("	&_
+				"       select S.COD_MF, S.PERIODO, SUM(S.DIAS) AS DIAS_SOLICITADOS "	&_
+				"         	from cb_vac_sol S		"	&_
+				"  			WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+				"  			AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+				"       GROUP BY S.COD_MF, S.PERIODO"	&_
+				"     ) S"	&_
+				" WHERE S.COD_MF = V.COD_MF"	&_
+				" AND S.PERIODO = V.PERIODO"	&_
+				" /*AND V.DIAS_TOMADOS <> S.DIAS"	&_
+				" AND V.DIAS_CALCULADOS >= S.DIAS"	&_
+				" AND V.DIAS_TOMADOS = 0*/"	&_
+				" AND V.COD_EMP IN (1, 3, 15)"	&_
+				" ORDER BY V.PERIODO DESC"	
+		''msg_onWindow query, msg_Input
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+
+		nroFilasLeidas = 0
+		WHILE NOT rs.EOF
+
+			dbDIAS_ARRASTRE		= rs.rdoColumns("DIAS_ARRASTRE").Value
+			dbDIAS_CALCULADOS	= rs.rdoColumns("DIAS_CALCULADOS").Value
+			dbDIAS_TOTALES		= rs.rdoColumns("DIAS_TOTALES").Value
+			dbMAX_FRAG			= rs.rdoColumns("MAX_FRAG").Value
+			dbDIAS_TOMADOS		= rs.rdoColumns("DIAS_TOMADOS").Value
+			dbDIAS_RESTANTES	= rs.rdoColumns("DIAS_RESTANTES").Value
+			dbDIAS_RESTANTES_SOL= rs.rdoColumns("DIAS_RESTANTES_SOL").Value
+			dbDIAS_SOLICITADOS	= rs.rdoColumns("DIAS_SOLICITADOS").Value
+
+
+			mensaje = 	"Días Arrastre 	: "			& dbDIAS_ARRASTRE		&vbNewLine&_
+						"Días Calculados	: "		& dbDIAS_CALCULADOS		&vbNewLine&_
+						"Días Totales	: "			& dbDIAS_TOTALES		&vbNewLine&_
+						"Días Tomados	: "			& dbDIAS_SOLICITADOS	&vbNewLine&_
+						"Días Restantes	: "			& dbDIAS_RESTANTES_SOL	&vbNewLine&vbNewLine&_
+						"Legajo	: "					& col_COD_MF	&vbNewLine&_
+						"Periodo	: "				& col_PERIODO 	&vbNewLine&_
+						"Empresa	: "				& col_COD_EMP	&vbNewLine&_
+						"Fragmentación Max	: "		& dbMAX_FRAG	&vbNewLine''&_
+			obj.controles("txtReporteDetalleSolVac").Texto 	= mensaje
+			
+
+			nroFilasLeidas = nroFilasLeidas +1			
+			rs.MoveNext
+		WEND
+		rs.close
+
+
+
+	end function
+
+	public function grdPreviExcel_Vacaciones_OnSelectedCell
+		filaSeleccionada = obj.controles(nombreGrilla).fila
+		mensaje =  obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", filaSeleccionada)
+		col_EstadoImportacion = obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", filaSeleccionada)
+		if isnull(col_EstadoImportacion) OR col_EstadoImportacion="" then 
+				col_EstadoImportacion = 0
+			else
+				col_EstadoImportacion = cInt(col_EstadoImportacion)
+		end if
+
+		msg_onFormControl  mensaje, msg_Info
+		select case col_EstadoImportacion
+			case is_ERROR_NoIgnorable
+				msg_onFormControl  mensaje, msg_Error
+			
+			case is_ADVERTENCIA_Ignorable
+				msg_onFormControl  mensaje, msg_Warn
+
+			case is_OK_RegistradoEnDB, is_OK_RegistradoEnDB_Adv
+				msg_onFormControl  mensaje, msg_OK
+			
+		end select
+	end function
+
+	public function informarErroresEnExcel
+		cantColumnasExcel = 15
+		nroHojaExcel  = 1
+		nroColumnaErrorExcel  = 13
+		nroFila = 0
+		
+		mensaje = "Informando errores en el archivo Excel"
+		msg_onFormControl	mensaje, msg_Question
+
+		nombreArchivo = obj.controles("txtArchivoXLS").texto
+		Set objExcel = CreateObject("Excel.Application")
+		Set objWorkbook = objExcel.Application.Workbooks.Open(nombreArchivo)
+
+			cantFilasGrilla = obj.controles(nombreGrilla).filas
+			for i=0 TO (cantFilasGrilla - 1)
+				nroFila = i+2
+				msgObservacion = obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i)
+				objExcel.Worksheets(nroHojaExcel).Cells(nroFila, nroColumnaErrorExcel).Value = msgObservacion
+
+				msgSOEID = obj.controles(nombreGrilla).ValorCelda("col_SOEID", i)
+				objExcel.Worksheets(nroHojaExcel).Cells(nroFila, nroColumnaErrorExcel+1).Value = msgSOEID
+
+				msgNombreApellido = obj.controles(nombreGrilla).ValorCelda("col_NombreApellido", i)	
+				objExcel.Worksheets(nroHojaExcel).Cells(nroFila, nroColumnaErrorExcel+2).Value = msgNombreApellido
+			next
+
+		''objWorkbook.SaveAs nombreArchivo
+		objExcel.DisplayAlerts = false
+		estado = objWorkbook.Save
+		
+		objWorkbook.Close 	''		objExcel.Application.Workbooks.Close
+		objExcel.Quit''		objExcel.Application.Quit
+		Set objExcel = Nothing
+		Set objWorkbook = Nothing
+		''mensaje = "Éxito: Las Observaciones de la grilla fueron guardadas en el Excel importado. Estado: " & estado
+		mensaje = "Éxito: Las Observaciones de la grilla fueron guardadas en el Excel importado."
+		msg_onFormControl	mensaje, msg_Question 
+	end function
+
+
+	public function actualizarEInformarCantErroresEnLaGrilla
+		''hayErroresOAdvertenciasEnEnLaGrilla
+		cantErrores_Grilla = 0
+		cantAdvertencias_Grilla = 0
+		cantAdvertenciasMarcadas_Grilla = 0
+		cantOKAprobado_Grilla = 0
+
+		cantFilasGrilla = obj.controles(nombreGrilla).filas
+		for i=0 TO (cantFilasGrilla - 1)
+
+			col_EstadoImportacion = obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+			col_IgnorarError 	  = obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", i)
+			if isnull(col_EstadoImportacion) OR col_EstadoImportacion="" then 
+					col_EstadoImportacion = 0
+				else
+					col_EstadoImportacion = cInt(col_EstadoImportacion)
+			end if
+
+			select case col_EstadoImportacion
+				case is_ERROR_NoIgnorable
+					cantErrores_Grilla 		= cantErrores_Grilla + 1
+				
+				case is_ADVERTENCIA_Ignorable
+					cantAdvertencias_Grilla	= cantAdvertencias_Grilla + 1
+					if col_IgnorarError <> 0 then
+						cantAdvertenciasMarcadas_Grilla = cantAdvertenciasMarcadas_Grilla + 1
+					end if
+
+				case is_OK_Aprobado
+					cantOKAprobado_Grilla	= cantOKAprobado_Grilla + 1
+				
+				case is_OK_RegistradoEnDB
+					cantOKDB_Grilla 		= cantOKDB_Grilla + 1
+			end select
+		next
+
+		mensaje = mensaje & vbNewLine & "Cant Total:		" & cantFilasGrilla
+		mensaje = mensaje & vbNewLine & "Cant Aprobada:		" & cantOKAprobado_Grilla
+		mensaje = mensaje & vbNewLine & "Cant Advertencias:		" & cantAdvertencias_Grilla
+		mensaje = mensaje & vbNewLine & "Cant Adv.Marcadas:		" & cantAdvertenciasMarcadas_Grilla
+		mensaje = mensaje & vbNewLine & "Cant Errores:		" & cantErrores_Grilla
+
+		msg_onFormControl	mensaje, msg_Info
+
+	end function
+
+
+	public function habilitarImportacionSiNoHayErroresEnLaGrilla
+		''hayErroresOAdvertenciasEnEnLaGrilla
+		cantErrores_Grilla = 0
+		cantAdvertencias_Grilla = 0
+
+		cantFilasGrilla = obj.controles(nombreGrilla).filas
+		for i=0 TO (cantFilasGrilla - 1)
+
+			col_EstadoImportacion = obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+			if isnull(col_EstadoImportacion) OR col_EstadoImportacion="" then 
+					col_EstadoImportacion = 0
+				else
+					col_EstadoImportacion = cInt(col_EstadoImportacion)
+			end if
+
+			select case col_EstadoImportacion
+				case is_ERROR_NoIgnorable
+					cantErrores_Grilla 		= cantErrores_Grilla + 1
+				
+				case is_ADVERTENCIA_Ignorable
+					cantAdvertencias_Grilla	= cantAdvertencias_Grilla + 1
+			end select
+		next
+
+		if cantErrores_Grilla > 0 then 
+				obj.controles(nombre_btnGuardarEnBD).Visible	= false
+				obj.controles(nombre_btnGuardarEnBD).Habilitado	= false
+				mostrarMensajeErrorGral cantErrores_Grilla, "Error - Validación de Datos"
+				exit function 
+			else
+				obj.controles(nombre_btnGuardarEnBD).Visible	= true
+				obj.controles(nombre_btnGuardarEnBD).Habilitado	= true
+		end if
+
+		if cantAdvertencias_Grilla > 0 then 
+			mensaje = "No se encontraron errores en el Excel de importación, pero sí hay advertencias que debe prestar atención"  & vbNewLine & vbNewLine & "Si desea importarlas, active las casillas de IgnorarError"
+			msg_onWindow 	mensaje, msg_Warn
+			
+			if cantAdvertencias_Grilla = 1 then
+				mensaje = mensaje & vbNewLine & "Se encontró "  	& cantAdvertencias_Grilla & " advertencia" 
+			else
+				mensaje = mensaje & vbNewLine & "Se encontraron "  	& cantAdvertencias_Grilla & " advertencias"
+			end if 
+
+			msg_onFormControl	mensaje, msg_Warn
+		end if
+
+	end function
+
+
+	public function btnIgnorarAdvertencias_ACTION
+		cantFilasGrilla = obj.controles(nombreGrilla).filas
+		esLaPrimerAdvertencia = true
+		nuevoEstadoAdvertencia= false
+
+		for i=0 TO (cantFilasGrilla - 1)
+			col_EstadoImportacion = obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+			if isnull(col_EstadoImportacion) OR col_EstadoImportacion="" then 
+				exit function
+			end if
+
+
+			col_EstadoImportacion	= Cint(col_EstadoImportacion)
+			col_IgnorarError 		= obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", i) 
+
+			if col_EstadoImportacion = is_ADVERTENCIA_Ignorable then
+				if esLaPrimerAdvertencia then
+					esLaPrimerAdvertencia = false
+					if getBooleanValue(col_IgnorarError) = true then
+						nuevoEstadoAdvertencia = false
+						else
+						nuevoEstadoAdvertencia = true
+					end if 
+				end if 
+
+				obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", i) = nuevoEstadoAdvertencia
+			end if 
+		next
+	end function
+
+	public function getTextoSeparadoPorComaYComilla(textoSeparadoPorComa)
+		textoSeparadoPorComaComilla = ""
+		'1) Agregar comillas entre las comas (si existen) y quitar todos los espacios
+			textoSeparadoPorComa =	replace(textoSeparadoPorComa," ", "")
+			textoSeparadoPorComaComilla = UCase(replace(textoSeparadoPorComa,",", "', '"))		
+		'2) Agregar comilla al principio
+			textoSeparadoPorComaComilla = "'" & textoSeparadoPorComaComilla
+		'3) Agregar comilla al final
+			textoSeparadoPorComaComilla = textoSeparadoPorComaComilla & "'"
+		
+		getTextoSeparadoPorComaYComilla = textoSeparadoPorComaComilla
+	end function
+
+	public function flt_chkBuscarPorSoeid_Click_Action
+		Dim mensaje
+		chkBuscarPorSoeid 	= obj.controles("flt_chkBuscarPorSoeid").Valor
+		
+		if chkBuscarPorSoeid=0 then
+			mensaje = "Nros Legajo (Separados por coma. Vacío = Todos)"
+			obj.controles("flt_cmbPeriodoVac").Texto = ""
+			else
+			mensaje = "Ingresar SOEIDs (Separados por coma)"
+		end if
+		obj.Controles("lblNroLegajo").Texto = mensaje
+	end function
+
+	public function txtArchivoXLS_OnClick
+		rutaDelArchivoYNombre = obj.controles("txtArchivoXLS").texto
+		mensaje = rutaDelArchivoYNombre
+		msg_onFormControl mensaje, msg_Info
+	end function
+
+
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+public sub btnSubirExcel_Action
+	'' 0) Blanqueo-limpieza de controles dependientes
+		msg_onFormControl "", msg_Info
+		obj.controles("grdPreviExcel_Vacaciones").LimpiarGrilla 
+		'''const nombreControl_DeshacerCambios 		= "btnDB_DeshacerCambiosGrilla"
+		'''const nombreControl_frmGestionImportacion 	= "frmGestionImportacion"
+		obj.controles(nombre_btnGuardarEnBD).Visible	= false
+		obj.controles(nombre_btnGuardarEnBD).Habilitado	= false
+		obj.controles(nombreControl_DeshacerCambios).Visible	= false
+		obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
+		obj.controles(nombreControl_frmGestionImportacion).refControl.BackColor = rgb(240, 240, 240)
+
+		''obj.controles(nombreControl_DeshacerCambios).Visible	= false
+		''obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
+
+
+	''1) Lectura de archivo y declaración de variables
+	set cmd = obj.CommonDialog    
+	cmd.ShowOpen                  
+	cmd.Filter = "XLS Files(*.xls, *.xlsx)|*.xls;*.xlsx|" 
+	obj.Controles("txtArchivoXLS").Texto = cmd.FileName
+
+	Dim headerExcel, mensaje
+	mensaje 	= ""
+	esUltFila 	= false
+	nroFila 	= 2 'Fila 2 porque la uno es la cabecera del excel las siguientes contienen los datops a cargar '
+	' Reiniciar el resto de los componentes
+	' variables para la lectura de Excel
+		cantColumnasExcel = 15
+		nroHojaExcel  = 1
+		nombreArchivo = obj.controles("txtArchivoXLS").texto
+
+		Set FSO = CreateObject("Scripting.FileSystemObject")
+		nombreArchivoAImportar = FSO.GetFileName(nombreArchivo)
+		''LOG.info("importando archivo: " + nombreArchivoAImportar);
+
+	'' Comienza lectura de excel
+	mensajeErrorTitulo = "Validación de Archivo Excel"   
+	mensajeErrorValida = ""
+
+	IF isnull(nombreArchivo) or nombreArchivo = "" then    
+		mensajeErrorValida = "No se seleccionó ningún archivo"
+		msg_onFormControl mensajeErrorValida, msg_Error
+		exit sub
+	END IF 
+
+
+		mensaje = "Archivo Excel seleccionado " & vbNewLine &"[ " & nombreArchivoAImportar & " ]"
+		msg_onFormControl mensaje, msg_Info
+		
+		Set objExcel  	= CreateObject("Excel.Application")
+		Set objWorkbook = objExcel.Application.Workbooks.Open(nombreArchivo)
+
+		nombreDeHoja = objExcel.Worksheets(nroHojaExcel).Name
+		'''objExcel.Visible = true
+		'nombreDeHoja = objExcel.Application.Caller.Worksheet.Name
+		'nombreDeHoja = ActiveSheet.Name
+
+		mensaje = mensaje & vbNewLine & vbNewLine & "Nombre de Hoja" & vbNewLine & "[ "& nombreDeHoja & " ]"
+		msg_onFormControl mensaje, msg_Info
+
+
+		'' 1) nombre de columnas
+			Dim nroCol_COD_MF
+			Dim nroCol_PERIODO
+			Dim nroCol_COD_EMP
+			Dim nroCol_FEC_INI
+			Dim nroCol_FEC_FIN
+			Dim nroCol_FEC_PEDIDO
+			Dim nroCol_PLUS_VAC
+			Dim nroCol_ADE_VAC
+			Dim nroCol_MES
+			Dim nroCol_ANIO
+			Dim nroCol_APROB_VAC
+
+			Dim col_NroFilaExcel
+			Dim col_COD_MF
+			Dim col_PERIODO
+			Dim col_COD_EMP
+			Dim col_FEC_INI
+			Dim col_FEC_FIN
+			Dim col_CantDias
+			Dim col_FEC_PEDIDO
+			Dim col_PLUS_VAC
+			Dim col_ADE_VAC
+			Dim col_MES
+			Dim col_ANIO
+			Dim col_APROB_VAC
+
+			nomCol_COD_MF		= "COD_MF"		+ " : NROLEGAJO"
+			nomCol_PERIODO		= "PERIODO"		+ " : FECHAPERIODO"
+			nomCol_COD_EMP		= "COD_EMP"		+ " : CODEMPRESA"
+			nomCol_FEC_INI		= "FEC_INI"		+ " : FECHAINICIO"
+			nomCol_DIAS			= "DIAS"		+ " : CANTDIAS"
+			nomCol_FEC_FIN		= "FEC_FIN"		+ " : FECHAFIN"
+			nomCol_FEC_PEDIDO	= "FEC_PEDIDO"	+ " : FECHAPEDIDO"
+			nomCol_PLUS_VAC		= "PLUS_VAC"	+ " : CHKPLUSVAC"
+			nomCol_ADE_VAC		= "ADE_VAC"		+ " : CHKADELANTO"
+			nomCol_MES			= "MES"			+ " : MES"
+			nomCol_ANIO			= "ANIO"		+ " : ANIO"
+			nomCol_APROB_VAC	= "APROB_VAC"	+ " : APROBADO"
+
+
+
+		'Valida el nombre de las columnas de la cabecera del Excel y obtiene su posición'
+		FOR i = 1 To cantColumnasExcel Step 1  
+			headerExcel = objExcel.Worksheets(nroHojaExcel).Cells(1, i).Value
+			headerExcel_Modif = UCase(replace(headerExcel," ", ""))
+			'''mensajeCabecera = "headerExcel: " & Trim(headerExcel_Modif)& "::   i: " & i	        if i = 1 then msg_onWindow  mensajeCabecera, msg_Input        end if 
+
+			Select Case headerExcel_Modif
+				case "COD_MF" 			, "NROLEGAJO"
+					nroCol_COD_MF = i
+					'Exit Select
+					
+				case "PERIODO" 			, "FECHAPERIODO"
+					nroCol_PERIODO = i
+					'Exit Select
+					
+				case "COD_EMP" 			, "CODEMPRESA"
+					nroCol_COD_EMP = i
+					'Exit Select
+					
+				case "FEC_INI" 			, "FECHAINICIO"
+					nroCol_FEC_INI = i
+					'Exit Select
+				case "FEC_FIN" 			, "FECHAFIN"
+					nroCol_FEC_FIN = i
+					'Exit Select
+
+				case "DIAS" 			, "CANTDIAS"
+					nroCol_CantDias = i
+					
+				case "FEC_PEDIDO" 		, "FECHAPEDIDO"
+					nroCol_FEC_PEDIDO = i
+					'Exit Select
+					
+				case "PLUS_VAC" 		, "CHKPLUSVAC"
+					nroCol_PLUS_VAC = i
+					'Exit Select
+					
+				case "ADE_VAC" 			, "CHKADELANTO"
+					nroCol_ADE_VAC = i
+					'Exit Select
+					
+				case "MES" 				, "MES"
+					nroCol_MES = i
+					'Exit Select
+					
+				case "ANIO" 			, "ANIO", "AÑO"
+					nroCol_ANIO = i
+					'Exit Select
+					
+				case "APROB_VAC" 		, "APROBADO", "CHKAPROBADO"
+					nroCol_APROB_VAC = i
+					'Exit Select
+			
+			End Select
+		NEXT 
+
+		'''	huboErroresFormatoExcel = false
+		'''	''1) Verificar ingresos excel
+		'''	if huboErroresFormatoExcel then
+		'''		'AgregarLineaError("")
+		'''	end if
+
+		' variables para la validación de formato de Datos
+		Dim logErroresExcel, hayErroresFormatoExcel, msgObservacion
+		msgObservacion = "OK"
+		hayErroresFormatoExcel = false	
+		cantErroresEncontrados = 0
+		'Lectura de datos excel y pasaje a la grilla
+		do while not esUltFila 	
+
+			'Asignación de valores de la fila que se está leyendo'
+			col_COD_MF		= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_COD_MF).Value
+			col_PERIODO		= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_PERIODO).Value
+			''col_COD_EMP		= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_COD_EMP).Value
+			col_FEC_INI		= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_FEC_INI).Value
+			col_CantDias	= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_CantDias).Value
+			'col_FEC_FIN		= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_FEC_FIN).Value
+			col_FEC_PEDIDO	= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_FEC_PEDIDO).Value
+			col_PLUS_VAC	= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_PLUS_VAC).Value
+			col_ADE_VAC		= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_ADE_VAC).Value
+			col_MES			= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_MES).Value
+			col_ANIO		= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_ANIO).Value
+			col_APROB_VAC	= objExcel.Worksheets(nroHojaExcel).Cells(nroFila,	nroCol_APROB_VAC).Value
+
+			'Proceso de validación formato de datos del excel
+			hayErroresFormatoExcel = false	
+			if isnull(col_COD_MF) or col_COD_MF = "" then
+				esUltFila = true
+			else
+				IF NOT IsNumeric(col_COD_MF) THEN 
+					hayErroresFormatoExcel = true
+					msgObservacion = "Error: Valor no numérico" & " *Fila: " & (nroFila-1) & ", Columna: "& nomCol_COD_MF 
+				END IF     
+
+				IF NOT isDate(col_PERIODO) then
+					hayErroresFormatoExcel = true
+					msgObservacion = "Error: No es una fecha válida" & " *Fila: " & (nroFila-1) & ", Columna: "& nomCol_PERIODO 
+				END IF
+
+				''IF NOT IsNumeric(col_COD_EMP) THEN 
+				''	hayErroresFormatoExcel = true
+				''	msgObservacion = "Valor no numérico" & " *Fila: " & (nroFila-1) & ", Columna: "& nomCol_COD_EMP 
+				''END IF 
+
+				IF NOT isDate(col_FEC_INI) then
+					hayErroresFormatoExcel = true
+					msgObservacion = "Error: No es una fecha válida" & " *Fila: " & (nroFila-1) & ", Columna: "& nomCol_FEC_INI 
+				END IF
+
+				''IF NOT isDate(col_FEC_FIN) then
+				''	hayErroresFormatoExcel = true
+				''	msgObservacion = "No es una fecha válida" & " *Fila: " & (nroFila-1) & ", Columna: "& nomCol_FEC_FIN 
+				''END IF
+
+				IF NOT isDate(col_FEC_PEDIDO) then
+					hayErroresFormatoExcel = true
+					msgObservacion = "Error: No es una fecha válida" & " *Fila: " & (nroFila-1) & ", Columna: "& nomCol_FEC_PEDIDO 
+				END IF
+				
+				IF NOT IsNumeric(col_CantDias) OR Trim(col_CantDias) = "" THEN 
+					hayErroresFormatoExcel = true
+					msgObservacion = "Error: Valor no numérico" & " *Fila: " & (nroFila-1) & ", Columna: "& nomCol_DIAS 
+				END IF
+				IF NOT col_CantDias > 0 THEN 
+					hayErroresFormatoExcel = true
+					msgObservacion = "Error: La cant. de días debe ser superior a cero" & " *Fila: " & (nroFila-1) & ", Columna: "& nomCol_DIAS 
+				END IF
+				col_FEC_FIN = DateAdd("d", col_CantDias, col_FEC_INI) 
+				''IF isnull(col_PLUS_VAC) or col_PLUS_VAC = "" THEN
+				''	hayErroresFormatoExcel = true
+				''	msgObservacion = "Falta completar " & "*Fila: " & (nroFila-1) & ", Columna: "& nomCol_PLUS_VAC
+				''END IF
+				''
+				''IF isnull(col_ADE_VAC) or col_ADE_VAC = "" THEN
+				''	hayErroresFormatoExcel = true
+				''	msgObservacion = "Falta completar " & vbNewLine & "*Fila: " & (nroFila-1) & ", Columna: "& nomCol_ADE_VAC
+				''END IF
+				''
+				''IF isnull(col_APROB_VAC) or col_APROB_VAC = "" THEN
+				''	hayErroresFormatoExcel = true
+				''	msgObservacion = "Falta completar " & vbNewLine & "*Fila: " & (nroFila-1) & ", Columna: "& nomCol_APROB_VAC
+				''END IF
+				col_PLUS_VAC	= getBooleanValue_Excel(col_PLUS_VAC)	
+				col_ADE_VAC		= getBooleanValue_Excel(col_ADE_VAC)
+				col_APROB_VAC	= getBooleanValue_Excel(col_APROB_VAC)	
+
+				if hayErroresFormatoExcel = true then
+						cantErroresEncontrados = cantErroresEncontrados + 1
+						COL_OBSERVACIONES = msgObservacion
+					else
+						COL_OBSERVACIONES = ""''"OK: El formato del Excel está validado"
+				end if
+				
+				col_PERIODO		= Format(CStr(col_PERIODO)		, formatoFechaDB)
+				col_FEC_INI		= Format(CStr(col_FEC_INI)		, formatoFechaDB)
+				col_FEC_FIN		= Format(CStr(col_FEC_FIN)		, formatoFechaDB)
+
+				'Se agregan las filas a la grilla
+				col_NroFilaExcel = (nroFila-1)
+				'''col_COD_MF = LeftPadZeros(col_COD_MF)
+				''obj.controles(nombreGrilla).ValorCelda("col_NroFilaExcel", nroFilasLeidas)	= col_NroFilaExcel
+				''obj.controles(nombreGrilla).ValorCelda("col_COD_MF", nroFilasLeidas)			= col_COD_MF
+				''obj.controles(nombreGrilla).ValorCelda("col_PERIODO", nroFilasLeidas)			= col_PERIODO
+				''obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", nroFilasLeidas)			= col_COD_EMP
+				''obj.controles(nombreGrilla).ValorCelda("col_FEC_INI", nroFilasLeidas)			= col_FEC_INI
+				''obj.controles(nombreGrilla).ValorCelda("col_FEC_FIN", nroFilasLeidas)			= col_FEC_FIN
+				''obj.controles(nombreGrilla).ValorCelda("col_CantDias", nroFilasLeidas)		= col_CantDias
+				''obj.controles(nombreGrilla).ValorCelda("col_FEC_PEDIDO", nroFilasLeidas)		= col_FEC_PEDIDO
+				''obj.controles(nombreGrilla).ValorCelda("col_MES", nroFilasLeidas)				= col_MES
+				''obj.controles(nombreGrilla).ValorCelda("col_ANIO", nroFilasLeidas)			= col_ANIO
+				''obj.controles(nombreGrilla).ValorCelda("col_APROB_VAC", nroFilasLeidas)		= col_APROB_VAC
+				''obj.controles(nombreGrilla).ValorCelda("col_ADE_VAC", nroFilasLeidas)			= col_ADE_VAC
+				''obj.controles(nombreGrilla).ValorCelda("col_PLUS_VAC", nroFilasLeidas)		= col_PLUS_VAC
+				''obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", nroFilasLeidas)	= COL_OBSERVACIONES
+				''obj.controles(nombreGrilla).ValorCelda("col_NombreApellido", nroFilasLeidas)	= ""
+				''obj.controles(nombreGrilla).ValorCelda("col_SOEID", nroFilasLeidas)			= ""
+				''obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", nroFilasLeidas)	= false
+				''obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) 			= is_PENDIENTE_validacion
+				filaParaAgregar = 	col_NroFilaExcel	& vbtab &_
+									col_COD_MF			& vbtab &_
+									col_PERIODO			& vbtab &_
+									col_COD_EMP			& vbtab &_
+									col_FEC_INI			& vbtab &_
+									col_FEC_FIN			& vbtab &_
+									col_CantDias		& vbtab &_
+									col_FEC_PEDIDO		& vbtab &_
+									col_MES				& vbtab &_
+									col_ANIO			& vbtab &_
+									col_APROB_VAC		& vbtab &_
+									col_ADE_VAC			& vbtab &_
+									col_PLUS_VAC		& vbtab &_
+									COL_OBSERVACIONES	& vbtab 
+
+				obj.controles("grdPreviExcel_Vacaciones").AgregarFila = filaParaAgregar
+					''''''col_NroFilaExcel & vbtab & col_COD_MF & vbtab &  col_PERIODO &_
+					''''''vbtab &  col_COD_EMP & vbtab &  col_FEC_INI & vbtab &  col_FEC_FIN & vbtab &  col_CantDias &_
+					''''''vbtab &  col_FEC_PEDIDO & vbtab &  col_MES & vbtab &  col_ANIO & vbtab &  col_APROB_VAC  &_
+					''''''vbtab &  col_ADE_VAC    & vbtab &  col_PLUS_VAC & vbtab &  COL_OBSERVACIONES
+
+				'Después de insertar la fila en la grilla de previsualización, pintar de rojo aquellas con errores'
+				if hayErroresFormatoExcel = true then
+					cantColumnasGrilla = 15
+					obj.Controles(nombreGrilla).refControl.Cell(13,(nroFila-1),0,(nroFila-1),cantColumnasGrilla) = vbRed 'El 13 convierte a BOLD'
+					obj.Controles(nombreGrilla).refControl.Cell(7, (nroFila-1),0,(nroFila-1),cantColumnasGrilla) = vbRed ''rgb(255, 0, 0)
+					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", nroFila-1) = is_ERROR_NoIgnorable
+					obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", nroFila-1) = false
+				end if
+
+				nroFila = nroFila + 1
+			end if
+			
+		loop   
+
+		objWorkbook.Close
+		objExcel.Quit
+
+		Set objExcel = Nothing
+		Set objWorkbook = Nothing
+	''----------------------------------------------------------------------------------------------------------------''
+	''----------------------------------------------------------------------------------------------------------------''
+	mensaje = ""
+	cantFilasLeidas = (nroFila -  2)
+	msgCantFilasLeidas = "Cantidad de filas leídas: " & cantFilasLeidas & vbNewLine 
+	if cantFilasLeidas <= 0 then
+		mensaje =	"Recuerde que para realizar la importación de un archivo Excel, es necesario completar todas las columnas con el formato correspondiente"
+		mensaje =  	mensaje & vbNewLine & vbNewLine & msgCantFilasLeidas
+		msg_onFormControl	mensaje, msg_Error
+		exit sub
+	end if 
+
+
+	IF cantErroresEncontrados > 0 THEN
+		mostrarMensajeErrorGral cantErroresEncontrados, "Error - Formato de Datos Excel"
+		obj.controles(nombre_btnGuardarEnBD).Visible	= false
+		obj.controles(nombre_btnGuardarEnBD).Habilitado	= false
+		obj.controles(nombreControl_frmGestionImportacion).refControl.BackColor = rgb(240, 240, 240)
+		exit sub
+	ELSE
+		if not existenLosNroLegajo_Empresa_DB then   
+			mensaje = "Algunos legajos/empresas no fueron encontradas en la BBDD de Buxis"
+			msg_onFormControl	mensaje, msg_Error
+			exit sub
+		end if
+
+		cargarGrillaCon_NombreApellido_SOEID(nombreGrilla)
+
+		cantErroresEncontrados = 0
+		cantErroresEncontrados = cantErroresValidacionFechasSolicitadas
+		if cantErroresEncontrados > 0 then
+			''mensaje = "Se encontraron errores en las fechas solicitadas. Por favor, revise la columna Observaciones para obtener más detalles"
+			''mostrarMensajeErrorGral cantErroresEncontrados, "Error - Validación de Datos"
+			informarErroresEnExcel
+			habilitarImportacionSiNoHayErroresEnLaGrilla
+			exit sub
+		end if
+
+
+		''aprobarCadaFilaObservaciones
+		mensaje = "Se completaron las validaciones del archivo con éxito" & vbNewLine & vbNewLine & "Los registros de la grilla ya están disponibles para ser guardados en la Base de Datos (BBDD)"
+		mensaje =  mensaje & vbNewLine & vbNewLine & msgCantFilasLeidas
+		msg_onWindow 		mensaje, msg_Info
+		msg_onFormControl	mensaje, msg_OK
+		obj.controles(nombreControl_frmGestionImportacion).refControl.BackColor = rgb(125, 150, 170)
+		obj.controles(nombre_btnGuardarEnBD).Visible	= true
+		obj.controles(nombre_btnGuardarEnBD).Habilitado	= true
+		obj.controles(nombre_btnGuardarEnBD).setFoco() 
+	END IF
+end sub
+
+''**********************************************************************************************************************************************************************************************************''
+'Se encarga de leer los datos existentes en la tabla CB_VAC_SOL'
+public sub btnFiltrarResultados_Action
+		const formatoFechaDB = "DD/MM/YYYY"
+		''const nombreGrillaReporte 	= "grdReporte_VacacionesSol"
+		chkSoloCargaMasiva 	= obj.controles("flt_chkSoloCargaMasiva").Valor
+		chkBuscarPorSoeid 	= obj.controles("flt_chkBuscarPorSoeid").Valor
+		txtNroLegajo 		= obj.controles("flt_txtNroLegajo").Texto
+		txtPeriodo 			= obj.controles("flt_txtPeriodo").Texto
+		
+		cmbPeriodoVac_Texto	= obj.controles("flt_cmbPeriodoVac").Texto
+		cmbPeriodoVac_sql	= obj.controles("flt_cmbPeriodoVac").SelectCombo
+
+		if trim(txtNroLegajo)="" AND trim(txtPeriodo)="" AND trim(chkSoloCargaMasiva)=0 AND trim(cmbPeriodoVac_Texto)="" then
+			mensaje = "Por favor seleccione algún filtro, para acotar la cantidad de resultados de las solictudes de vacaciones"
+			msg_onWindow  mensaje, msg_Warn
+			exit sub
+		end if 
+
+		if not isDate(txtPeriodo) AND trim(txtPeriodo)<>"" then
+			mensaje = "Ingrese una fecha válida"
+			msg_onWindow  mensaje, msg_Warn
+			exit sub
+		end if
+
+		obj.controles(nombreGrillaReporte).limpiargrilla
+		query =    	" SELECT vs.COD_MF, PERIODO, COD_EMP, FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO " &_
+					" 	, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC, vs.LAST_USR, vs.LAST_HOST " &_
+					"   , (SELECT MAX(mf.NOM_MF) FROM MAEFUNC2 mf " &_
+					"         WHERE mf.COD_MF = vs.COD_MF) AS NOM_MF " &_
+					"   , s.SOEID AS SOEID " &_
+					" FROM CB_VAC_SOL vs, CB_SOEID s " &_
+					" WHERE s.COD_MF = vs.COD_MF " &_
+					" AND  	vs.COD_EMP NOT IN (123, 222, 333, 443) " 
+
+
+
+
+		if trim(txtNroLegajo) <> "" then
+			textoSeparadoPorComaYComilla = getTextoSeparadoPorComaYComilla(txtNroLegajo)
+			if chkBuscarPorSoeid<>0 then
+					query = query & " AND 	s.SOEID IN (" & textoSeparadoPorComaYComilla & ") "
+				else
+					if esSoloNrosCommasSpaces(txtNroLegajo) then
+							query = query & " AND vs.COD_MF IN ( " & txtNroLegajo & ")"
+						else
+							mensaje = "En la búsqueda por NroLegajo solo se permite numeros separados por coma"
+							mensaje = mensaje & vbNewLine & vbNewLine & "También puede intentar con una búsqueda por SOEID"
+							msg_onWindow  mensaje, msg_Warn
+						exit sub
+					end if
+			end if
+
+		end if
+
+		if trim(txtPeriodo) <> "" then
+			txtPeriodo	= CDate(Format(CStr(txtPeriodo), 	formatoFechaDB))
+			query = query & " AND 	PERIODO = TO_DATE('" 	& txtPeriodo & "', '"&	formatoFechaDB&"')"
+		end if 
+
+		if trim(chkSoloCargaMasiva) <> 0 then
+			query = query & " AND 	vs.LAST_HOST LIKE 'Cargado el%'"
+		end if 
+
+		if trim(cmbPeriodoVac_Texto) <> "" then
+			query = query & " AND 	EXTRACT(YEAR FROM vs.PERIODO) = "	& cmbPeriodoVac_Texto
+		end if 
+
+		query = query & " ORDER BY vs.COD_MF, vs.PERIODO DESC"
+		''msg_onWindow query, msg_Input
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+
+		nroFilasLeidas = 0
+		WHILE NOT rs.EOF
+			db_COD_MF = rs.rdoColumns("COD_MF").Value
+			db_NombreApellido	= rs.rdoColumns("NOM_MF").Value
+			db_SOEID	= rs.rdoColumns("SOEID").Value
+			db_PERIODO = rs.rdoColumns("PERIODO").Value
+			db_COD_EMP = rs.rdoColumns("COD_EMP").Value
+			db_FEC_INI = rs.rdoColumns("FEC_INI").Value
+			db_FEC_FIN = rs.rdoColumns("FEC_FIN").Value
+			db_DIAS = rs.rdoColumns("DIAS").Value
+			db_FEC_PEDIDO = rs.rdoColumns("FEC_PEDIDO").Value
+			db_PLUS_VAC = rs.rdoColumns("PLUS_VAC").Value
+			db_ADE_VAC = rs.rdoColumns("ADE_VAC").Value
+			db_MES = rs.rdoColumns("MES").Value
+			db_ANIO = rs.rdoColumns("ANIO").Value
+			db_APROB_VAC = rs.rdoColumns("APROB_VAC").Value
+			db_LAST_USR	 		= rs.rdoColumns("LAST_USR").Value
+			db_LAST_HOST	 	= rs.rdoColumns("LAST_HOST").Value
+
+
+			if not isnull(db_LAST_HOST) then 
+				db_LAST_HOST	= CStr(db_LAST_HOST)
+			end if
+			db_PLUS_VAC		= getBooleanValue_Excel(db_PLUS_VAC)	
+			db_ADE_VAC		= getBooleanValue_Excel(db_ADE_VAC)
+			db_APROB_VAC	= getBooleanValue_Excel(db_APROB_VAC)
+
+			'-- Ingresa en la grilla de Visualización			
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_COD_MF", nroFilasLeidas)			= db_COD_MF
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_NombreApellido", nroFilasLeidas)	= db_NombreApellido		
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_SOEID", nroFilasLeidas)			= db_SOEID		
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_PERIODO", nroFilasLeidas)		= db_PERIODO	
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_COD_EMP", nroFilasLeidas)		= db_COD_EMP	
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_FEC_INI", nroFilasLeidas)		= db_FEC_INI	
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_FEC_FIN", nroFilasLeidas)		= db_FEC_FIN	
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_CantDias", nroFilasLeidas)		= db_DIAS	
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_FEC_PEDIDO", nroFilasLeidas)		= db_FEC_PEDIDO	
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_PLUS_VAC", nroFilasLeidas)		= db_PLUS_VAC	
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_ADE_VAC", nroFilasLeidas)		= db_ADE_VAC	
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_MES", nroFilasLeidas)			= db_MES
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_ANIO", nroFilasLeidas)			= db_ANIO
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_APROB_VAC", nroFilasLeidas)		= db_APROB_VAC	
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_LAST_USR", nroFilasLeidas)		= db_LAST_USR	
+			''	obj.controles(nombreGrillaReporte).ValorCelda("col_LAST_HOST", nroFilasLeidas)		= db_LAST_HOST	
+
+			db_FEC_PEDIDO = getDateAsString(db_FEC_PEDIDO)
+
+
+			filaParaAgregar = db_COD_MF			& vbtab &_
+							db_NombreApellido	& vbtab &_
+							db_SOEID			& vbtab &_
+							db_PERIODO			& vbtab &_
+							db_COD_EMP			& vbtab &_
+							db_FEC_INI			& vbtab &_
+							db_FEC_FIN			& vbtab &_
+							db_DIAS				& vbtab &_
+							db_FEC_PEDIDO		& vbtab &_
+							db_MES				& vbtab &_
+							db_ANIO				& vbtab &_
+							db_PLUS_VAC			& vbtab &_
+							db_ADE_VAC			& vbtab &_
+							db_APROB_VAC		& vbtab &_
+							db_LAST_USR			& vbtab &_
+							db_LAST_HOST
+						
+			obj.controles(nombreGrillaReporte).AgregarFila = filaParaAgregar
+
+
+			nroFilasLeidas = nroFilasLeidas + 1
+			rs.MoveNext
+		WEND
+		rs.close
+
+
+
+		if nroFilasLeidas > 0 then
+				if nroFilasLeidas = 1 then
+						mensaje = "Se encontró " & nroFilasLeidas & " solo resultado"
+					else
+						mensaje = "Se encontraron " & nroFilasLeidas & " resultados"
+				end if 
+				''msg_onWindow  mensaje, msg_Info
+				obj.controles("frmFiltrosReporte").refControl.BackColor = rgb(125, 150, 170)
+				obj.controles("lblCantResultados").Texto = mensaje
+
+			else
+				obj.controles("frmFiltrosReporte").refControl.BackColor = rgb(240, 240, 240)
+				obj.controles("lblCantResultados").Texto = "No se encontraron resultados"
+		end if 
+end sub
+
+''**********************************************************************************************************************************************************************************************************''
+public sub  btnDB_GuardarEnBD_ACTION_IgnorarAdvertencias
+
+	''nombreGrilla 	= "grdPreviExcel_Vacaciones"
+	const formatoFechaDB = "DD/MM/YYYY"
+	huboErrores_TransaccionDB = false
+	cantFilasGrilla = obj.controles(nombreGrilla).filas
+
+		mensaje = "Se continuará con el almacenado de los registros cargados en la grilla de previsualización"
+		mensaje = mensaje & vbNewLine & vbNewLine & "Recuerde que puede revertir los cambios"
+		mensaje = mensaje & vbNewLine & vbNewLine & "¿Confirma la acción?"
+	''seConfirmoLaAccion = msgBox(mensaje ,vbExclamation 	+ vbYesNo , "Pregunta BBDD") 'msg_onWindow(mensaje, msg_Question)
+	seConfirmoLaAccion = msg_onWindow(mensaje, msg_Question)
+	''''nombreControl_DeshacerCambios = "btnDB_DeshacerCambiosGrilla"
+
+	IF NOT seConfirmoLaAccion THEN
+			mensaje = "La acción fue cancelada por el Usuario"
+			msg_onFormControl	mensaje, msg_Info
+			obj.controles(nombreControl_DeshacerCambios).Visible	= false
+			obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
+			exit sub		
+	  ELSE
+
+
+			actualizarEInformarCantErroresEnLaGrilla
+
+			cantFilasRegistradas_DB = 0
+			cantFilasRegistradasIgnorandoError_DB = 0
+
+			FOR i=0 TO (cantFilasGrilla - 1)
+				seGuardoEnDB = dbInsert(i)
+				if seGuardoEnDB then 
+					cantFilasRegistradas_DB = cantFilasRegistradas_DB + 1
+
+					col_IgnorarError 		= obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", i) 
+					col_EstadoImportacion 	= obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+					col_EstadoImportacion	= Cint(col_EstadoImportacion)
+					if Cint(col_EstadoImportacion) = is_OK_RegistradoEnDB_Adv and getBooleanValue(col_IgnorarError) <> false then 
+						cantFilasRegistradasIgnorandoError_DB = cantFilasRegistradasIgnorandoError_DB + 1
+					end if
+				end if 
+			NEXT
+
+
+			
+			if not huboErrores_TransaccionDB and seConfirmoLaAccion then
+					obj.controles(nombreControl_DeshacerCambios).Visible	= true
+					obj.controles(nombreControl_DeshacerCambios).Habilitado	= true
+					obj.controles(nombreControl_DeshacerCambios).setFoco 
+					obj.controles(nombre_btnGuardarEnBD).Visible	= false
+					obj.controles(nombre_btnGuardarEnBD).Habilitado	= false
+
+					mensaje = "Los datos cargados en la grilla fueron registrados en Buxis con éxito" & vbNewLine
+					''mensaje = mensaje & vbNewLine & "CantTotal: " & cantFilasGrilla
+					mensaje = mensaje & vbNewLine & "Cant. de filas Registradas: 		" & cantFilasRegistradas_DB
+					if cantFilasRegistradasIgnorandoError_DB > 0 then
+						mensaje = mensaje & vbNewLine & "Cant. que ignoró la advertencia: 	" & cantFilasRegistradasIgnorandoError_DB
+					end if 
+
+
+					msg_onWindow		mensaje, msg_Info
+					msg_onFormControl	mensaje, msg_OK
+					''obj.Fichas(1).SetFoco ''ReporteVacacional
+				else
+					obj.controles(nombreControl_DeshacerCambios).Visible	= false
+					obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
+
+					mensaje = "Ocurrió un error al registrar los cambios en la Base de Datos"
+					msg_onFormControl	mensaje, msg_Error
+			end if
+
+	END IF
+end sub
+
+	private function dbInsert(i)
+				grilla = nombreGrilla
+				dbInsert = false
+				'0) Se comienza con la lectura de cada fila de la grilla de previsualización (YA APROBADAS)'
+					col_IgnorarError 		= obj.controles(grilla).ValorCelda("col_IgnorarError", i) 
+					col_EstadoImportacion 	= obj.controles(grilla).ValorCelda("col_EstadoImportacion", i)
+					col_EstadoImportacion	= Cint(col_EstadoImportacion)
+					
+
+					if col_EstadoImportacion = is_ERROR_NoIgnorable then
+						dbInsert = false
+						exit function
+					end if 
+
+
+					if col_EstadoImportacion = is_ADVERTENCIA_Ignorable then
+						if getBooleanValue(col_IgnorarError) = false then
+							dbInsert = false
+							exit function
+						end if 
+
+						else 
+							if col_EstadoImportacion <> is_OK_Aprobado then
+								exit function
+							end if
+					end if 
+
+					
+				'1) Se recuperan los valores correspondientes a cada columna'
+					col_COD_MF		= obj.controles(grilla).ValorCelda("col_COD_MF", i)		
+					col_PERIODO		= obj.controles(grilla).ValorCelda("col_PERIODO", i)		
+					col_COD_EMP		= obj.controles(grilla).ValorCelda("col_COD_EMP", i)		
+					col_FEC_INI		= obj.controles(grilla).ValorCelda("col_FEC_INI", i)		
+					col_FEC_FIN		= obj.controles(grilla).ValorCelda("col_FEC_FIN", i)		
+					col_CantDias	= obj.controles(grilla).ValorCelda("col_CantDias", i)			
+					col_FEC_PEDIDO	= obj.controles(grilla).ValorCelda("col_FEC_PEDIDO", i)			
+					col_PLUS_VAC	= obj.controles(grilla).ValorCelda("col_PLUS_VAC", i)			
+					col_ADE_VAC		= obj.controles(grilla).ValorCelda("col_ADE_VAC", i)		
+					col_MES			= obj.controles(grilla).ValorCelda("col_MES", i)	
+					col_ANIO		= obj.controles(grilla).ValorCelda("col_ANIO", i)		
+					col_APROB_VAC	= obj.controles(grilla).ValorCelda("col_APROB_VAC", i)			
+					LAST_USR		= obj.Usuario
+					LAST_HOST		= "Cargado el " & getCurrentDateAsString
+
+				'2) Se realizan las asignaciones de valores booleanos'
+					col_PLUS_VAC	= getYesNoFromBool(getBooleanValue(col_PLUS_VAC))
+					col_ADE_VAC		= getYesNoFromBool(getBooleanValue(col_ADE_VAC))
+					col_APROB_VAC	= getYesNoFromBool(getBooleanValue(col_APROB_VAC))
+
+				'3) Se realizan las conversiones de fechas'
+					col_PERIODO		= Format(CStr(col_PERIODO)		, formatoFechaDB)
+					col_FEC_INI		= Format(CStr(col_FEC_INI)		, formatoFechaDB)
+					col_FEC_FIN		= Format(CStr(col_FEC_FIN)		, formatoFechaDB)
+					col_FEC_PEDIDO	= Format(CStr(col_FEC_PEDIDO)	, formatoFechaDB)	
+
+				'4) Se prepara y ejecuta la transacción con la BBDD'
+					insertSql = "INSERT INTO CB_VAC_SOL(COD_MF, PERIODO, COD_EMP, FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC,LAST_USR, LAST_HOST) "
+					insertSql = insertSql & " VALUES ('" & col_COD_MF & "'" 	&_
+							", TO_DATE('" & col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+							", " & col_COD_EMP &_
+							", TO_DATE('" & col_FEC_INI & "', '"&formatoFechaDB&"')" 	&_
+							", TO_DATE('" & col_FEC_FIN & "', '"&formatoFechaDB&"')" 	&_
+							", " & col_CantDias &_
+							", TO_DATE('" & col_FEC_PEDIDO & "', '"&formatoFechaDB&"')" 	&_
+							", '" & col_PLUS_VAC	& "'" &_
+							", '" & col_ADE_VAC		& "'" &_
+							", '" & col_MES			& "'" &_
+							", '" & col_ANIO		& "'" &_
+							", '" & col_APROB_VAC	& "'" &_
+							", '" & LAST_USR		& "'" &_
+							", '" & LAST_HOST		& "'" &_
+							" ) " 
+
+					''msg_onWindow insertSql, msg_Input 
+					obj.conexion.execute(insertSql)
+
+
+					''Actualizar Saldo en CB_VAC
+					sql = 	" UPDATE CB_VAC  " &_ 
+					" SET DIAS_TOMADOS = (DIAS_TOMADOS + " & col_CantDias &")" &_ 
+					" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+					" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	
+					''''msg_onWindow sql, msg_Input 
+					obj.conexion.execute(sql)
+
+
+					
+					''huboErrores_TransaccionDB = true
+				'5) Se informan los resultados de la transacción'
+				if col_EstadoImportacion = is_ADVERTENCIA_Ignorable then
+					obj.controles(grilla).ValorCelda("col_EstadoImportacion", i) = is_OK_RegistradoEnDB_Adv
+					else
+					obj.controles(grilla).ValorCelda("col_EstadoImportacion", i) = is_OK_RegistradoEnDB
+				end if
+				obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = "• " & obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i)
+				pintarFila i+1, msg_DB_Update
+				''msgObservacion = "OK: Guardado en BBDD Buxis con éxito"
+				''obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+
+
+				dbInsert = true
+	end function 
+''**********************************************************************************************************************************************************************************************************''
+public sub  btnDB_DeshacerCambiosGrilla_ACTION_IgnorarAdvertencias
+	
+	''nombreGrilla 	= "grdPreviExcel_Vacaciones"
+	const formatoFechaDB = "DD/MM/YYYY"
+	huboErrores_TransaccionDB = false
+	cantFilasGrilla = obj.controles(nombreGrilla).filas
+	cantFilasAfectadas_DB = 0
+
+	FOR i=0 TO (cantFilasGrilla - 1)
+			seGuardoEnDB = dbUpdate(i)
+			if seGuardoEnDB then 
+				cantFilasAfectadas_DB = cantFilasAfectadas_DB + 1
+				''resume next
+			end if 
+	NEXT
+
+	'5) Se informan los resultados de la transacción (general)'
+	''mensaje = " de " & cantFilasGrilla " filas"
+	''''nombreControl_DeshacerCambios = "btnDB_DeshacerCambiosGrilla"
+
+	if not huboErrores_TransaccionDB then
+			obj.controles(nombreControl_DeshacerCambios).habilitado	= false
+			obj.controles(nombreControl_DeshacerCambios).visible	= false
+			''obj.controles(nombre_btnGuardarEnBD).Visible	= true
+			''obj.controles(nombre_btnGuardarEnBD).Habilitado	= true
+			obj.controles(nombre_btnGuardarEnBD).Visible	= false
+			obj.controles(nombre_btnGuardarEnBD).Habilitado	= false
+
+			mensaje = "Los cambios fueron revertidos con éxito"
+			mensaje = mensaje & vbNewLine & "cantFilasActualizadas: " & cantFilasAfectadas_DB
+			mensaje = mensaje & vbNewLine & vbNewLine & "Si desea volver a importar los registros vuelva a importar el Excel"
+
+			msg_onWindow		mensaje, msg_Info
+			msg_onFormControl	mensaje, msg_Info
+		else
+			mensaje = "Ocurrieron errores al tratar de revertir los cambios"
+			msg_onFormControl	mensaje, msg_Error
+	end if
+end sub
+
+	private function dbUpdate(i)
+			dbUpdate = false
+			'0) Se comienza con la lectura de cada fila de la grilla de previsualización (YA APROBADAS)'
+				col_EstadoImportacion 	= obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+				col_EstadoImportacion	= Cint(col_EstadoImportacion)
+				if col_EstadoImportacion <> is_OK_RegistradoEnDB AND col_EstadoImportacion <> is_OK_RegistradoEnDB_Adv then
+					dbUpdate = false
+					exit function
+				end if 
+			'1) Se recuperan los valores correspondientes a cada columna'
+				col_COD_MF		= obj.controles(nombreGrilla).ValorCelda("col_COD_MF", i)		
+				col_PERIODO		= obj.controles(nombreGrilla).ValorCelda("col_PERIODO", i)		
+				col_COD_EMP		= obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i)		
+				col_FEC_INI		= obj.controles(nombreGrilla).ValorCelda("col_FEC_INI", i)		
+				col_FEC_FIN		= obj.controles(nombreGrilla).ValorCelda("col_FEC_FIN", i)		
+				col_CantDias	= obj.controles(nombreGrilla).ValorCelda("col_CantDias", i)			
+
+			'2) Se realizan las conversiones de fechas'
+				col_PERIODO		= Format(CStr(col_PERIODO)		, formatoFechaDB)
+				col_FEC_INI		= Format(CStr(col_FEC_INI)		, formatoFechaDB)
+				col_FEC_FIN		= Format(CStr(col_FEC_FIN)		, formatoFechaDB)
+
+				''
+				''if quedaronDiasTomadosEnNegativo(col_COD_MF, col_PERIODO) then 
+				''	mensaje = "Existen registros con días tomados en negativo. Se cancela operación. Revisar empleado: " & col_COD_MF & "- Periodo: " & col_PERIODO
+				''	msg_onWindow	mensaje, msg_Error
+				''	exit sub
+				''end if 
+
+			'3) Se prepara y ejecuta la transacción con la BBDD'
+				sqlDelete = "DELETE FROM CB_VAC_SOL "
+				sqlDelete = sqlDelete &_ 
+						" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+						" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+						" AND COD_EMP = " 			& col_COD_EMP &_
+						" AND FEC_INI = TO_DATE('" 	& col_FEC_INI & "', '"&formatoFechaDB&"')" 	&_
+						" AND LAST_HOST LIKE 'Cargado el%'"
+					''	" AND FEC_FIN = TO_DATE('" 	& col_FEC_FIN & "', '"&formatoFechaDB&"')" 	&_
+
+				''''msg_onWindow sqlDelete, msg_Input 
+				obj.conexion.execute(sqlDelete)
+
+
+				''Actualizar Saldo en CB_VAC
+				sql = 	" UPDATE CB_VAC  " &_ 
+				" SET DIAS_TOMADOS = (DIAS_TOMADOS - " & col_CantDias &")" &_ 
+				" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+				" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+				" AND DIAS_TOMADOS > 0"
+				''''msg_onWindow sql, msg_Input 
+				cantFilas  = obj.conexion.execute(sql)
+				'''inputBox "", "cantFilas", cantFilas
+				''huboErrores_TransaccionDB = true
+			'4) Se informan los resultados de la transacción por fila'
+			msgObservacion = "OK: Se borró de la BBDD con éxito"
+			obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+			pintarFila i+1, msg_DB_Update
+			obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_OK_RegistradoEnDB
+
+			dbUpdate = true
+	end function
+
+public sub  btnDB_DeshacerCambiosGrilla_ACTION
+	
+	''nombreGrilla 	= "grdPreviExcel_Vacaciones"
+	const formatoFechaDB = "DD/MM/YYYY"
+	huboErrores_TransaccionDB = false
+	cantFilasGrilla = obj.controles(nombreGrilla).filas
+
+
+	FOR i=0 TO (cantFilasGrilla - 1)
+
+		'0) Se comienza con la lectura de cada fila de la grilla de previsualización (YA APROBADAS)'
+		'1) Se recuperan los valores correspondientes a cada columna'
+			col_COD_MF		= obj.controles(nombreGrilla).ValorCelda("col_COD_MF", i)		
+			col_PERIODO		= obj.controles(nombreGrilla).ValorCelda("col_PERIODO", i)		
+			col_COD_EMP		= obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i)		
+			col_FEC_INI		= obj.controles(nombreGrilla).ValorCelda("col_FEC_INI", i)		
+			col_FEC_FIN		= obj.controles(nombreGrilla).ValorCelda("col_FEC_FIN", i)		
+			col_CantDias	= obj.controles(nombreGrilla).ValorCelda("col_CantDias", i)			
+
+		'2) Se realizan las conversiones de fechas'
+			col_PERIODO		= Format(CStr(col_PERIODO)		, formatoFechaDB)
+			col_FEC_INI		= Format(CStr(col_FEC_INI)		, formatoFechaDB)
+			col_FEC_FIN		= Format(CStr(col_FEC_FIN)		, formatoFechaDB)
+
+			''
+			''if quedaronDiasTomadosEnNegativo(col_COD_MF, col_PERIODO) then 
+			''	mensaje = "Existen registros con días tomados en negativo. Se cancela operación. Revisar empleado: " & col_COD_MF & "- Periodo: " & col_PERIODO
+			''	msg_onWindow	mensaje, msg_Error
+			''	exit sub
+			''end if 
+
+		'3) Se prepara y ejecuta la transacción con la BBDD'
+			sqlDelete = "DELETE FROM CB_VAC_SOL "
+			sqlDelete = sqlDelete &_ 
+					" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+					" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+					" AND COD_EMP = " 			& col_COD_EMP &_
+					" AND FEC_INI = TO_DATE('" 	& col_FEC_INI & "', '"&formatoFechaDB&"')" 	&_
+					" AND LAST_HOST LIKE 'Cargado el%'"
+				''	" AND FEC_FIN = TO_DATE('" 	& col_FEC_FIN & "', '"&formatoFechaDB&"')" 	&_
+
+			''''msg_onWindow sqlDelete, msg_Input 
+			obj.conexion.execute(sqlDelete)
+
+
+			''Actualizar Saldo en CB_VAC
+			sql = 	" UPDATE CB_VAC  " &_ 
+			" SET DIAS_TOMADOS = (DIAS_TOMADOS - " & col_CantDias &")" &_ 
+			" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+			" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	
+			''''msg_onWindow sql, msg_Input 
+			cantFilas  = obj.conexion.execute(sql)
+			'''inputBox "", "cantFilas", cantFilas
+			''huboErrores_TransaccionDB = true
+		'4) Se informan los resultados de la transacción por fila'
+		msgObservacion = "OK: Se borró de la BBDD con éxito"
+		obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+	NEXT
+
+	'5) Se informan los resultados de la transacción (general)'
+	''mensaje = " de " & cantFilasGrilla " filas"
+	''''nombreControl_DeshacerCambios = "btnDB_DeshacerCambiosGrilla"
+
+	if not huboErrores_TransaccionDB then
+			obj.controles(nombreControl_DeshacerCambios).habilitado	= false
+			obj.controles(nombreControl_DeshacerCambios).visible	= false
+			obj.controles(nombre_btnGuardarEnBD).Visible	= true
+			obj.controles(nombre_btnGuardarEnBD).Habilitado	= true
+			mensaje = "Los cambios fueron revertidos con éxito"
+			msg_onFormControl	mensaje, msg_Info
+		else
+			mensaje = "Ocurrieron errores al tratar de revertir los cambios"
+			msg_onFormControl	mensaje, msg_Error
+	end if
+end sub
+
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+''#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*''
+'' chkIngresoAutomatico
+'' txtCodFormularioLeido
+'' lblCodFormularioLeido 
+'' btnIngresarCodFormulario
+'' txtEstadoLectora_info
+'' frmLectoraDeFormularios
+'' lblCantFilasGrillaLectora
+'' btnDBActualizarFormVac
+const nombreControl_frmLectoraDeFormularios = "frmLectoraDeFormularios"
+const estado_Aprobado 	= "A"
+const estado_Pendiente 	= "P"
+const estado_Cancelado 	= "C"
+const estado_Rechazado 	= "R"
+
+
+
+
+	public function msg_onFormControlInfo(mensaje, tipo, nombreControl_MostrarMensaje) 
+		reemplazarTexto = true
+
+		if reemplazarTexto = true then
+			obj.controles(nombreControl_MostrarMensaje).TEXTO =	mensaje
+		else
+			anteriorTexto = obj.controles(nombreControl_MostrarMensaje).TEXTO 
+			textoSeparador = vbNewLine & "____________________________" & vbtab & vbNewLine 
+			obj.controles(nombreControl_MostrarMensaje).TEXTO = mensaje & textoSeparador & anteriorTexto
+		end if
+		''const COLOR_ROJO  	= #c84637 '' rgb (200, 70, 55) 
+		''const COLOR_VERDE	= RGB (0, 155,  80)
+		''const COLOR_AMARILLO= &e1c846& ''RGB (225, 200, 70) ''vbYellow
+		''const COLOR_AZUL	= vbBlue ''RGB (0, 155,  80)
+		select case tipo
+			case msg_OK
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(10, 150, 15)''rgb(0, 200, 3) 
+			case msg_Info
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(15, 130, 180) ''20, 160, 250
+			case msg_Warn
+				''obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(250, 160, 0)''rgb(225, 200, 70)
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(100, 80, 0)''rgb(225, 200, 70)
+			case msg_Error
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(200, 70, 55)
+			case msg_Question
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(190, 100, 180)
+			case msg_Input
+
+		end select
+	end function
+	
+	''Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+
+	public function pintarCuadroLectura(boolPintar)
+		nombreControl = nombreControl_frmLectoraDeFormularios
+
+		if boolPintar then
+			obj.controles(nombreControl).refControl.BackColor = getColorFromTipo(color_DarkBlue)
+		else 
+			'' sleep 1 second
+			'' Sleep 1000
+			obj.controles(nombreControl).refControl.BackColor = getColorFromTipo(null)
+		end if 
+	end function
+	
+	public function existeIDSolicitud_EnCBVacSOL(idSolicitud)
+		existe = false
+
+		query =	" SELECT w.ID "&_
+				"    , (SELECT COUNT(*) "&_
+				"        FROM cb_vac_sol vs "&_
+				"        WHERE vs.COD_MF <> 0 "&_
+				"        AND vs.COD_MF 	= w.COD_MF "&_
+				"        AND vs.PERIODO 	= w.PERIODO "&_
+				"        AND vs.FEC_INI 	= w.FEC_INI "&_
+				"        AND vs.FEC_FIN 	= w.FEC_FIN "&_
+				"        ) AS ExisteEn_CBVacSOL "&_
+				" FROM cb_vac_sol_web w "&_
+				" WHERE w.ID = '" & idSolicitud  & "'" 
+
+		''msg_onWindow query, msg_Input
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+		IF NOT rs.EOF THEN
+			cantResultados = rs("ExisteEn_CBVacSOL").Value 'rs(0).Value
+			if cantResultados > 0 then
+					existe = true
+				else
+					existe = false
+			end if
+		END IF
+		rs.close
+
+		existeIDSolicitud_EnCBVacSOL = existe
+	end function
+
+	public function existeIDSolicitud(idSolicitud)
+		existe = false
+
+		query =	" SELECT COUNT(*) FROM CB_VAC_SOL_WEB "&_
+				" WHERE ID = '" & idSolicitud  & "'" 
+
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+		IF NOT rs.EOF THEN
+			if rs(0).Value > 0 then
+					existe = true
+				else
+					existe = false
+			end if
+		END IF
+		rs.close
+
+		existeIDSolicitud = existe
+	end function
+
+	public function cargarGrillaLectora(idSolicitud)
+		grilla = nombreGrillaLectora
+		'' 0) Dimensionar las variables que se obtendrán de la DB
+		Dim db_ID
+		Dim db_COD_MF
+		Dim db_COD_EMP
+		Dim db_PERIODO
+		Dim db_PERIODO_ANIO
+		Dim db_FEC_INI
+		Dim db_FEC_FIN
+		Dim db_CantDias
+		Dim db_FEC_PEDIDO
+		Dim db_ESTADO
+		Dim db_ESTADO_ID
+		Dim db_PLUS_VAC
+		Dim db_ADE_VAC
+		Dim db_MES
+		Dim db_ANIO
+		Dim db_APROB_VAC
+		Dim db_FEC_ULT_MODIF
+		
+		''1) Preparar query de obtención
+		query = " SELECT ID AS idSolicitud, COD_MF, COD_EMP " &_
+			" 		, EXTRACT(YEAR FROM PERIODO) AS anioPeriodo " &_
+			" 		, FEC_INI AS fechaInicio " &_
+			" 		, DIAS AS cantDias " &_
+			" 		, FEC_FIN AS fechaFin " &_
+			" 		, FEC_PEDIDO AS fechaSolicitud " &_
+			" 		, case  ESTADO  " &_
+			" 			WHEN 'B' THEN 'Inicial'  " &_
+			" 			WHEN 'P' THEN 'Pendiente' " &_
+			" 			WHEN 'A' THEN 'Aprobado'  " &_
+			" 			WHEN 'C' THEN 'Cancelado'  " &_
+			" 		END AS estado " &_
+			" 		, ESTADO AS IDESTADOSOLICITUD " &_
+			" 		, FEC_ULT_MODIF " &_
+			" 		, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC " &_
+			" 		, LAST_USR, LAST_HOST, PERIODO  " &_
+			" 	FROM CB_VAC_SOL_WEB " &_
+			" 	WHERE ID <> 0  " &_
+			" 	AND ID = " & idSolicitud &_
+			" 	ORDER BY ID DESC "
+		''2) Asignar los resultados de la consulta en las variables correspondientes
+			Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+				nroFilasLeidas = 0
+				WHILE NOT rs.EOF
+					db_ID = rs.rdoColumns("idSolicitud").Value
+					db_COD_MF = rs.rdoColumns("COD_MF").Value
+					db_COD_EMP = rs.rdoColumns("COD_EMP").Value
+					db_PERIODO = rs.rdoColumns("PERIODO").Value
+					db_PERIODO_ANIO = rs.rdoColumns("anioPeriodo").Value
+					db_FEC_INI = rs.rdoColumns("fechaInicio").Value
+					db_FEC_FIN = rs.rdoColumns("fechaFin").Value
+					db_CantDias = rs.rdoColumns("cantDias").Value
+					db_FEC_PEDIDO = rs.rdoColumns("fechaSolicitud").Value
+					db_ESTADO = rs.rdoColumns("estado").Value
+					db_ESTADO_ID = rs.rdoColumns("IDESTADOSOLICITUD").Value
+					db_PLUS_VAC = rs.rdoColumns("PLUS_VAC").Value
+					db_ADE_VAC = rs.rdoColumns("ADE_VAC").Value
+					db_MES = rs.rdoColumns("MES").Value
+					db_ANIO = rs.rdoColumns("ANIO").Value
+					db_APROB_VAC = rs.rdoColumns("APROB_VAC").Value
+					db_FEC_ULT_MODIF = rs.rdoColumns("FEC_ULT_MODIF").Value
+				
+				
+					if not isnull(db_LAST_HOST) then 
+						db_LAST_HOST	= CStr(db_LAST_HOST)
+					end if
+
+					if isnull(db_ADE_VAC) then db_ADE_VAC = ""		end if
+					if isnull(db_PLUS_VAC) then db_PLUS_VAC = ""	end if
+					if isnull(db_APROB_VAC) then db_APROB_VAC = ""	end if
+					if isnull(db_FEC_PEDIDO) then db_FEC_PEDIDO = ""	end if
+					if isnull(db_FEC_ULT_MODIF) then db_FEC_ULT_MODIF = ""	end if
+
+					''db_PLUS_VAC		= getBooleanValue_Excel(db_PLUS_VAC)	
+					''db_ADE_VAC		= getBooleanValue_Excel(db_ADE_VAC)
+					''db_APROB_VAC	= getBooleanValue_Excel(db_APROB_VAC)
+					'db_FEC_PEDIDO = getDateAsString(db_FEC_PEDIDO)
+					'db_FEC_ULT_MODIF = getDateAsString(db_FEC_ULT_MODIF)
+			
+					'-- Ingresa en la grilla de Visualización		
+					nroFilasLeidas = nroFilasLeidas + 1
+					rs.MoveNext
+				WEND
+			rs.close
+		''3) Llenar grilla con los valores obtenidos
+		cantFilasGrilla = obj.controles(grilla).filas
+		col_NroFilaGrilla = cantFilasGrilla''cantFilasGrilla + 1
+		
+		obj.controles(grilla).AgregarFila = ""
+		'-- Ingresa en la grilla de Visualización			
+		obj.controles(grilla).ValorCelda("col_ID", col_NroFilaGrilla)				= db_ID
+		obj.controles(grilla).ValorCelda("col_COD_MF", col_NroFilaGrilla)			= db_COD_MF
+		obj.controles(grilla).ValorCelda("col_PERIODO", col_NroFilaGrilla)			= db_PERIODO
+		obj.controles(grilla).ValorCelda("col_PERIODO_ANIO", col_NroFilaGrilla)	= db_PERIODO_ANIO
+		obj.controles(grilla).ValorCelda("col_COD_EMP", col_NroFilaGrilla)			= db_COD_EMP
+		obj.controles(grilla).ValorCelda("col_FEC_INI", col_NroFilaGrilla)			= db_FEC_INI
+		obj.controles(grilla).ValorCelda("col_FEC_FIN", col_NroFilaGrilla)			= db_FEC_FIN
+		obj.controles(grilla).ValorCelda("col_CantDias", col_NroFilaGrilla)		= db_CantDias
+		obj.controles(grilla).ValorCelda("col_FEC_PEDIDO", col_NroFilaGrilla)		= db_FEC_PEDIDO
+		''obj.controles(grilla).ValorCelda("col_ESTADO", col_NroFilaGrilla)			= db_ESTADO
+		obj.controles(grilla).ValorCelda("col_ESTADO_ID", col_NroFilaGrilla)		= db_ESTADO_ID
+		obj.controles(grilla).ValorCelda("col_PLUS_VAC", col_NroFilaGrilla)		= db_PLUS_VAC
+		obj.controles(grilla).ValorCelda("col_ADE_VAC", col_NroFilaGrilla)			= db_ADE_VAC
+		obj.controles(grilla).ValorCelda("col_MES", col_NroFilaGrilla)				= db_MES
+		obj.controles(grilla).ValorCelda("col_ANIO", col_NroFilaGrilla)			= db_ANIO
+		obj.controles(grilla).ValorCelda("col_APROB_VAC", col_NroFilaGrilla)		= db_APROB_VAC
+		obj.controles(grilla).ValorCelda("col_FEC_ULT_MODIF", col_NroFilaGrilla)	= db_FEC_ULT_MODIF
+		''obj.controles(grilla).ValorCelda("col_NombreApellido", nroFilasLeidas)	= db_NombreApellido		
+		''obj.controles(grilla).ValorCelda("col_SOEID", nroFilasLeidas)			= db_SOEID	
+		''obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", nroFilasLeidas)			= db_SOEID	
+	
+		cargarGrillaCon_NombreApellido_SOEID(grilla)
+		obj.controles(grilla).ValorCelda("col_existeEnCB_VAC_SOL", col_NroFilaGrilla)	= getYesNoFromBool(existeIDSolicitud_EnCBVacSOL(db_ID))
+
+		obj.controles(grilla).ValorCelda("col_chkAprobar", col_NroFilaGrilla)	= 0
+		obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitud", col_NroFilaGrilla)	= db_ESTADO_ID ''estado_Aprobado
+
+		''4) Si está cancelado pintar e informar la fila
+		if db_ESTADO_ID = estado_Cancelado or db_ESTADO_ID = estado_Rechazado then
+			nroFila = col_NroFilaGrilla + 1
+			tipo 	= msg_Error
+			pintarFilaGrilla nroFila, tipo, grilla, cantColumnasGrillaLectora
+			if db_ESTADO_ID = estado_Rechazado then
+				mensaje = "ERROR: La solicitud fue rechazada el " & db_FEC_ULT_MODIF
+			else
+				mensaje = "ERROR: La solicitud fue cancelada por el empleado el " & db_FEC_ULT_MODIF
+			end if
+			obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", col_NroFilaGrilla)	= mensaje
+			''obj.controles(grilla).refControl.Cell(6, (nroFila),0,(nroFila),"col_ID") = getColorFromTipo(null)
+		end if 
+		'' 5) Aprobar todos los pendientes por defecto y marcar guardado en Buxis
+		if db_ESTADO_ID = estado_Pendiente then
+			obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitud", col_NroFilaGrilla) = estado_Aprobado
+			obj.controles(grilla).ValorCelda("col_chkGuardarEnBuxis", col_NroFilaGrilla) = true
+		end if 
+
+	end function
+	
+
+	private function estaLaSolicitudEnLaGrillaPrevisualizacion(idSolicitud)
+		existe = false 
+		grilla = nombreGrillaLectora
+		cantFilasGrilla = obj.controles(grilla).filas
+		for i=0 TO (cantFilasGrilla - 1)
+			col_ID = obj.controles(grilla).ValorCelda("col_ID", i)
+			''mensaje = "cantFilas: "&cantFilasGrilla&"ID: "&col_ID
+			''msg_onWindow mensaje, msg_Info
+			if col_ID = idSolicitud then 
+					existe = true
+					estaLaSolicitudEnLaGrillaPrevisualizacion = existe
+					exit function
+				else
+					existe = false
+			end if
+		next
+		estaLaSolicitudEnLaGrillaPrevisualizacion = existe
+	end function
+
+	public function btnAprobarTodos_Grilla()
+		grilla = nombreGrillaLectora
+
+		cantFilasGrilla = obj.controles(grilla).filas
+		FOR i=0 TO (cantFilasGrilla - 1)
+			obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitud", i)	= estado_Aprobado
+		NEXT
+	end function
+
+	public function btnMarcarGuardarTodos_Grilla()
+		grilla = nombreGrillaLectora
+		Dim nuevoEstadoAdvertencia
+		esLaPrimerFila = true
+
+		cantFilasGrilla = obj.controles(grilla).filas
+		FOR i=0 TO (cantFilasGrilla - 1)
+			col_chkGuardarEnBuxis = obj.controles(grilla).ValorCelda("col_chkGuardarEnBuxis", i)
+
+			if esLaPrimerFila then
+				esLaPrimerFila = false
+				if getBooleanValue(col_chkGuardarEnBuxis) = true then
+					nuevoEstadoAdvertencia = false
+					else
+					nuevoEstadoAdvertencia = true
+				end if 
+			end if 
+			obj.controles(grilla).ValorCelda("col_chkGuardarEnBuxis", i)	= nuevoEstadoAdvertencia
+		NEXT
+	end function
+
+	private function informar_lblCantFilasGrillaLectora
+		cantFilasGrilla = obj.controles(nombreGrillaLectora).filas
+		mensaje = getMsgCantResultados(cantFilasGrilla)
+		obj.controles(nombreControl_lblCantFilasGrillaLectora).texto = mensaje
+	end function
+
+	public function posicionar_txtCodFormularioLeido
+		chkIngresoAutomatico 	= obj.controles("chkIngresoAutomatico").Valor
+		if chkIngresoAutomatico=0 then
+				exit function
+			else
+				idSolicitud = obj.controles("txtCodFormularioLeido").texto
+				mensaje = "Se leyó el ID: " & idSolicitud
+				msg_onFormControlInfo mensaje, msg_Info, nombreControl_txtEstadoLectora_info
+				obj.controles("txtCodFormularioLeido").texto = ""
+				obj.controles("txtCodFormularioLeido").setFoco()
+		end if
+	end function
+''**********************************************************************************************************************************************************************************************************''
+	public sub btnIngresarCodFormulario
+		'' 0) Validar ingreso de CodFormulario		
+		idSolicitud = obj.controles("txtCodFormularioLeido").texto
+		IF isnull(idSolicitud) or idSolicitud = "" then    
+			mensaje = "No se cargó ningún ID"
+			exit sub
+		END IF 
+		if not IsNumeric(idSolicitud) then 
+			mensaje = "ERROR: El id de la solicitud debe ser numérico. ID " & idSolicitud
+			msg_onFormControlInfo mensaje, msg_Error, nombreControl_txtEstadoLectora_info
+			exit sub
+		end if
+		'' 1) Obtener CodFormulario ingresado (Manual/Lectora)
+		''idSolicitud = Cint(idSolicitud) --> Produce un "overflow" cuando supera las seis cifras
+		'' 2) Verificar que el CodFormulario sea válido
+		if not existeIDSolicitud(idSolicitud) then
+			mensaje = "ERROR: No se encontró la solicitud con ID: " & idSolicitud
+			msg_onFormControlInfo mensaje, msg_Error, nombreControl_txtEstadoLectora_info
+			exit sub
+		end if
+		'' 3) Verificar que el registro no se encuentre en la grilla, para que no cargar datos repetidos
+		if estaLaSolicitudEnLaGrillaPrevisualizacion(idSolicitud) then
+			mensaje = "Atención: La solicitud ya se encuentra en la grilla. ID: " & idSolicitud
+			''msg_onFormControlInfo mensaje, msg_Error, nombreControl_txtEstadoLectora_info
+			exit sub
+		end if
+		'' 4) Cargar grilla con el CodFormulario validado
+		pintarCuadroLectura(true)
+		cargarGrillaLectora(idSolicitud)
+		'' 5) Limpiar ingreso del cuadro de texto y actualizar total de filas leídas
+		obj.controles("txtCodFormularioLeido").texto = ""
+		'' 5.2) total de filas en grilla
+		informar_lblCantFilasGrillaLectora
+		pintarCuadroLectura(false)
+		obj.controles("btnDBActualizarFormVac").refControl.Visible = true
+		'' 5.3) Volver a posicionar el foco 
+		posicionar_txtCodFormularioLeido()
+	end sub
+''**********************************************************************************************************************************************************************************************************''
+'Lecto
+
+	public sub btnIngresarCodFormulario
+		chkBuscarPorSoeid 	= obj.controles("chkBuscarPorSoeid_fltRep").Valor
+		''if chkBuscarPorSoeid=0 then
+		if getBooleanValue(col_IgnorarError) = false then
+		end if 
+		exit sub
+	end sub
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+public function grdObservacionesEnTextbox_OnSelectedCell(grilla)
+		filaSeleccionada = obj.controles(grilla).fila
+		mensaje =  obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", filaSeleccionada)
+		
+		msg_onFormControlInfo mensaje, msg_Info, nombreControl_txtEstadoLectora_info
+
+		' if isnull(col_EstadoImportacion) OR col_EstadoImportacion="" then 
+		' 		col_EstadoImportacion = 0
+		' 	else
+		' 		col_EstadoImportacion = cInt(col_EstadoImportacion)
+		' end if
+
+		' msg_onFormControl  mensaje, msg_Info
+		' select case col_EstadoImportacion
+		' 	case is_ERROR_NoIgnorable
+		' 		msg_onFormControl  mensaje, msg_Error
+			
+		' 	case is_ADVERTENCIA_Ignorable
+		' 		msg_onFormControl  mensaje, msg_Warn
+
+		' 	case is_OK_RegistradoEnDB, is_OK_RegistradoEnDB_Adv
+		' 		msg_onFormControl  mensaje, msg_OK
+			
+		' end select
+	end function
+''**********************************************************************************************************************************************************************************************************''
+	public function flt_chkBuscarPorSoeid_fltRep_Click_Action
+		Dim mensaje
+		chkBuscarPorSoeid 	= obj.controles("chkBuscarPorSoeid_fltRep").Valor
+		if chkBuscarPorSoeid=0 then
+			mensaje = "Nros Legajo (Separados por coma. Vacío = Todos)"
+			obj.controles("cmbPeriodoVac_fltRep").Texto = ""
+			obj.controles("cmbEstadoSolicitud_fltRep").Texto = ""
+			else
+			mensaje = "Ingresar SOEIDs (Separados por coma)"
+		end if
+		obj.Controles("lblNroLegajo_fltRep").Texto 		 = mensaje
+		obj.Controles("txtNroLegajo_fltRep").Descripcion = mensaje
+	end function
+
+''**********************************************************************************************************************************************************************************************************''
+
+	'Se encarga de leer los datos existentes en la tabla CB_VAC_SOL_WEB'
+	public sub btnFiltrarResultados_LectoraReporte_Action
+	'' A) Obtener valores cargados en los filtros
+		const formatoFechaDB = "DD/MM/YYYY"
+		grilla = nombreGrillaLectoraReporte'' 	= "grdLectora_Reporte"
+		chkBuscarPorSoeid 	= obj.controles("chkBuscarPorSoeid_fltRep").Valor
+		txtNroLegajo 		= obj.controles("txtNroLegajo_fltRep").Texto
+		idSolicitud 		= obj.controles("txtIdSolicitud_fltRep").Texto
+		cmbPeriodoVac		= obj.controles("cmbPeriodoVac_fltRep").Texto
+		cmbEstadoSolicitud	= obj.controles("cmbEstadoSolicitud_fltRep").Texto
+
+		if trim(txtNroLegajo)="" AND trim(txtPeriodo)="" AND trim(cmbPeriodoVac)="" AND trim(cmbEstadoSolicitud)="" AND trim(idSolicitud)="" then
+			mensaje = "Por favor seleccione algún filtro, para acotar la cantidad de resultados de las solicitudes vacacionales"
+			msg_onWindow  mensaje, msg_Warn
+			exit sub
+		end if 
+
+		if not isDate(txtPeriodo) AND trim(txtPeriodo)<>"" then
+			mensaje = "Ingrese una fecha válida"
+			msg_onWindow  mensaje, msg_Warn
+			exit sub
+		end if
+
+		obj.controles(grilla).limpiargrilla
+	'' B) Preparar query de obtención
+		query = "SELECT w.ID AS idSolicitud, w.COD_MF, w.COD_EMP "&_
+				"		, EXTRACT(YEAR FROM w.PERIODO) AS anioPeriodo "&_
+				"		, w.FEC_INI, w.DIAS, w.FEC_FIN, w.FEC_PEDIDO"&_
+				"		, case w.ESTADO  "&_
+				"			WHEN 'B' THEN 'Inicial'  "&_
+				"			WHEN 'P' THEN 'Pendiente' "&_
+				"			WHEN 'A' THEN 'Aprobado'  "&_
+				"			WHEN 'C' THEN 'Cancelado'  "&_
+				"			WHEN 'R' THEN 'Rechazado'  "&_
+				"			END AS estado "&_
+				"		, w.ESTADO AS estadoID"&_
+				"		, w.FEC_ULT_MODIF "&_
+				"		, w.PLUS_VAC, w.ADE_VAC, w.MES, w.ANIO, w.APROB_VAC "&_
+				"		, w.LAST_USR, w.LAST_HOST, w.PERIODO  "&_
+				"		, (SELECT MAX(mf.NOM_MF) FROM MAEFUNC2 mf "&_
+				"		      WHERE mf.COD_MF = w.COD_MF) AS NOM_MF "&_
+				"		, s.SOEID AS SOEID "&_
+				"	FROM "&_
+				"		CB_VAC_SOL_WEB w "&_
+				"		, CB_SOEID s "&_
+				"	WHERE w.ID <> 0  "&_
+				"	AND w.COD_MF = s.COD_MF "
+
+		if trim(txtNroLegajo) <> "" then
+			textoSeparadoPorComaYComilla = getTextoSeparadoPorComaYComilla(txtNroLegajo)
+			if chkBuscarPorSoeid<>0 then
+					query = query & " AND 	s.SOEID IN (" & textoSeparadoPorComaYComilla & ") "
+				else
+					if esSoloNrosCommasSpaces(txtNroLegajo) then
+							query = query & " AND w.COD_MF IN ( " & txtNroLegajo & ")"
+						else
+							mensaje = "En la búsqueda por NroLegajo solo se permite numeros separados por coma"
+							mensaje = mensaje & vbNewLine & vbNewLine & "También puede intentar con una búsqueda por SOEID"
+							msg_onWindow  mensaje, msg_Warn
+						exit sub
+					end if
+			end if
+
+		end if
+
+		if trim(idSolicitud) <> "" then
+			query = query & " AND w.ID = " & idSolicitud
+		end if 
+
+		if trim(cmbEstadoSolicitud) <> "" then
+			query = query & " AND ESTADO = '" & cmbEstadoSolicitud & "'"
+		end if 
+
+		if trim(cmbPeriodoVac) <> "" then
+			query = query & " AND EXTRACT(YEAR FROM w.PERIODO) = " & cmbPeriodoVac
+		end if 
+
+		query = query & " ORDER BY w.COD_MF, w.PERIODO, w.FEC_ULT_MODIF, w.ID DESC"
+		''msg_onWindow query, msg_Input
+		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+
+		nroFilasLeidas = 0
+	'' C) Cargar grilla con los valores de la DB
+		WHILE NOT rs.EOF
+		''2) Asignar los resultados de la consulta en las variables correspondientes
+			db_ID = rs.rdoColumns("idSolicitud").Value
+			db_COD_MF = rs.rdoColumns("COD_MF").Value
+			db_COD_EMP = rs.rdoColumns("COD_EMP").Value
+			db_PERIODO = rs.rdoColumns("PERIODO").Value
+			db_PERIODO_ANIO = rs.rdoColumns("anioPeriodo").Value
+			db_FEC_INI = rs.rdoColumns("FEC_INI").Value
+			db_FEC_FIN = rs.rdoColumns("FEC_FIN").Value
+			db_DIAS = rs.rdoColumns("DIAS").Value
+			db_FEC_PEDIDO = rs.rdoColumns("FEC_PEDIDO").Value
+			db_PLUS_VAC = rs.rdoColumns("PLUS_VAC").Value
+			db_ADE_VAC = rs.rdoColumns("ADE_VAC").Value
+			db_MES = rs.rdoColumns("MES").Value
+			db_ANIO = rs.rdoColumns("ANIO").Value
+			db_APROB_VAC = rs.rdoColumns("APROB_VAC").Value
+			db_LAST_USR = rs.rdoColumns("LAST_USR").Value
+			db_LAST_HOST = rs.rdoColumns("LAST_HOST").Value
+			db_ESTADO = rs.rdoColumns("estado").Value
+			db_ESTADO_ID = rs.rdoColumns("estadoID").Value
+			db_FEC_ULT_MODIF = rs.rdoColumns("FEC_ULT_MODIF").Value
+			db_NombreApellido = rs.rdoColumns("NOM_MF").Value
+			db_SOEID	= rs.rdoColumns("SOEID").Value
+
+			if not isnull(db_LAST_HOST) then 
+				db_LAST_HOST	= CStr(db_LAST_HOST)
+			end if
+
+			if isnull(db_ADE_VAC) then db_ADE_VAC = ""		end if
+			if isnull(db_PLUS_VAC) then db_PLUS_VAC = ""	end if
+			if isnull(db_APROB_VAC) then db_APROB_VAC = ""	end if
+			if isnull(db_NombreApellido) then db_NombreApellido = ""	end if
+			
+			db_FEC_PEDIDO = getDateAsString(db_FEC_PEDIDO)
+			db_FEC_ULT_MODIF = getDateAsString(db_FEC_ULT_MODIF)
+
+			db_PLUS_VAC		= getBooleanValue_Excel(db_PLUS_VAC)	
+			db_ADE_VAC		= getBooleanValue_Excel(db_ADE_VAC)
+			db_APROB_VAC	= getBooleanValue_Excel(db_APROB_VAC)
+		''3) Llenar grilla con los valores obtenidos
+			cantFilasGrilla = obj.controles(grilla).filas
+			col_NroFilaGrilla = cantFilasGrilla''cantFilasGrilla + 1
+			
+			obj.controles(grilla).AgregarFila = ""
+			'-- Ingresa en la grilla de Visualización			
+			obj.controles(grilla).ValorCelda("col_ID", col_NroFilaGrilla)			= db_ID
+			obj.controles(grilla).ValorCelda("col_COD_MF", col_NroFilaGrilla)		= db_COD_MF
+			obj.controles(grilla).ValorCelda("col_PERIODO", col_NroFilaGrilla)		= db_PERIODO
+			obj.controles(grilla).ValorCelda("col_PERIODO_ANIO", col_NroFilaGrilla)	= db_PERIODO_ANIO
+			obj.controles(grilla).ValorCelda("col_COD_EMP", col_NroFilaGrilla)		= db_COD_EMP
+			obj.controles(grilla).ValorCelda("col_FEC_INI", col_NroFilaGrilla)		= db_FEC_INI
+			obj.controles(grilla).ValorCelda("col_FEC_FIN", col_NroFilaGrilla)		= db_FEC_FIN
+			obj.controles(grilla).ValorCelda("col_CantDias", col_NroFilaGrilla)		= db_DIAS
+			obj.controles(grilla).ValorCelda("col_FEC_PEDIDO", col_NroFilaGrilla)	= db_FEC_PEDIDO
+			obj.controles(grilla).ValorCelda("col_PLUS_VAC", col_NroFilaGrilla)		= db_PLUS_VAC
+			obj.controles(grilla).ValorCelda("col_ADE_VAC", col_NroFilaGrilla)		= db_ADE_VAC
+			obj.controles(grilla).ValorCelda("col_MES", col_NroFilaGrilla)			= db_MES
+			obj.controles(grilla).ValorCelda("col_ANIO", col_NroFilaGrilla)			= db_ANIO
+			obj.controles(grilla).ValorCelda("col_APROB_VAC", col_NroFilaGrilla)	= db_APROB_VAC
+			obj.controles(grilla).ValorCelda("col_ESTADO", col_NroFilaGrilla)		= db_ESTADO
+			obj.controles(grilla).ValorCelda("col_ESTADO_ID", col_NroFilaGrilla)	= db_ESTADO_ID
+			obj.controles(grilla).ValorCelda("col_FEC_ULT_MODIF", col_NroFilaGrilla)= db_FEC_ULT_MODIF
+			obj.controles(grilla).ValorCelda("col_NombreApellido", col_NroFilaGrilla)	= db_NombreApellido		
+			obj.controles(grilla).ValorCelda("col_SOEID", col_NroFilaGrilla)			= db_SOEID	
+		''4) aumentar cant de filas leídas
+			nroFilasLeidas = nroFilasLeidas + 1
+			rs.MoveNext
+		WEND
+		rs.close
+	'' D) Informar resultados
+		if nroFilasLeidas > 0 then
+				mensaje = getMsgCantResultados(nroFilasLeidas)
+				''msg_onWindow  mensaje, msg_Info
+				obj.controles("frmLectoraDeFormulariosReporte").refControl.BackColor = rgb(125, 150, 170)
+				obj.controles("lblCantFilasGrillaLectoraReporte").Texto = mensaje
+
+			else
+				obj.controles("frmLectoraDeFormulariosReporte").refControl.BackColor = rgb(240, 240, 240)
+				obj.controles("lblCantFilasGrillaLectoraReporte").Texto = "No se encontraron resultados"
+		end if 
+	end sub	
+
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+public sub btnDB_LectoraActualizarEstadoFormularios
+	grilla 	= nombreGrillaLectora
+	cantFilasGrilla = obj.controles(grilla).filas
+	
+	'' 1) Validar que hayan registros en la grilla de previsualización para realizar la carga
+	if not cantFilasGrilla > 0 then
+			mensaje = "Atención: Aún no se cargaron formularios en la previsualización"
+			msg_onWindow mensaje, msg_Error
+			exit sub
+	end if
+
+	mensaje = "Se continuará con el almacenado de los registros cargados en la grilla de previsualización"
+	mensaje = mensaje & vbNewLine & vbNewLine & "¿Confirma la acción?"
+	''seConfirmoLaAccion = msgBox(mensaje ,vbExclamation 	+ vbYesNo , "Pregunta BBDD") 'msg_onWindow(mensaje, msg_Question)
+	seConfirmoLaAccion = msg_onWindow(mensaje, msg_Question)
+
+	'' 2) Validar que se haya confirmado la acción de guardar en DB
+	IF NOT seConfirmoLaAccion THEN
+			mensaje = "La acción fue cancelada por el Usuario"
+			msg_onFormControlInfo mensaje, msg_Error, nombreControl_txtEstadoLectora_info
+			exit sub		
+	  ELSE
+			cantFilasRegistradas_DB = 0
+			cantFilasRegistradasIgnorandoError_DB = 0
+
+			FOR i=0 TO (cantFilasGrilla - 1)
+				col_chkGuardarEnBuxis = obj.controles(grilla).ValorCelda("col_chkGuardarEnBuxis", i)
+				
+				if getBooleanValue(col_chkGuardarEnBuxis) <> false then 
+					seActualizoEnDB = dbUpdateEstadoForm(i)
+					if seActualizoEnDB then 
+						cantFilasRegistradas_DB = cantFilasRegistradas_DB + 1
+						''dbUpdateInsertCbVac(i)
+					end if 
+				end if
+			NEXT
+
+
+
+			
+			if not huboErrores_TransaccionDB and seConfirmoLaAccion then
+					cantFilasIgnoradas = cantFilasGrilla - cantFilasRegistradas_DB
+					mensaje = "Los datos cargados en la grilla fueron registrados en Buxis con éxito" & vbNewLine
+					
+					mensaje = mensaje & vbNewLine & "Cant. de filas Registradas: 	" & cantFilasRegistradas_DB
+					if cantFilasIgnoradas > 0 then
+						mensaje = mensaje & vbNewLine & "Cant. que ignoró:	" & cantFilasIgnoradas
+					end if 
+					mensaje = mensaje & vbNewLine & "Total de filas: 	" & cantFilasGrilla
+
+					msg_onWindow		mensaje, msg_Info
+					msg_onFormControlInfo mensaje, msg_OK, nombreControl_txtEstadoLectora_info
+					''obj.Fichas(3).SetFoco ''ReporteVacacional
+				else
+					obj.controles(nombreControl_DeshacerCambios).Visible	= false
+					obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
+
+					mensaje = "Ocurrió un error al registrar los cambios en la Base de Datos"
+					msg_onFormControlInfo mensaje, msg_OK, nombreControl_txtEstadoLectora_info
+			end if
+	END IF
+end sub
+
+	private function dbUpdateEstadoForm(i)
+		grilla = nombreGrillaLectora
+		dbUpdateEstadoForm = false
+		'0) Se comienza con la lectura de cada fila de la grilla de previsualización (YA APROBADAS)'			
+		'1) Se recuperan los valores correspondientes a cada columna'
+			col_ID 			= obj.controles(grilla).ValorCelda("col_ID", i)
+			col_COD_MF		= obj.controles(grilla).ValorCelda("col_COD_MF", i)	
+			col_ESTADO_ID	= obj.controles(grilla).ValorCelda("col_ESTADO_ID", i)
+			cmbEstadoSolicitud	= obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitud", i)
+			LAST_USR		= obj.Usuario
+			LAST_HOST		= "Modificado el " & getCurrentDateAsString
+
+		'2) Se realizan las asignaciones de valores booleanos'
+			col_PLUS_VAC	= getYesNoFromBool(getBooleanValue(col_PLUS_VAC))
+			col_ADE_VAC		= getYesNoFromBool(getBooleanValue(col_ADE_VAC))
+			col_APROB_VAC	= getYesNoFromBool(getBooleanValue(col_APROB_VAC))
+
+		'3) Se realizan las conversiones de fechas'
+			col_PERIODO		= Format(CStr(col_PERIODO)		, formatoFechaDB)
+			col_FEC_INI		= Format(CStr(col_FEC_INI)		, formatoFechaDB)
+			col_FEC_FIN		= Format(CStr(col_FEC_FIN)		, formatoFechaDB)
+			col_FEC_PEDIDO	= Format(CStr(col_FEC_PEDIDO)	, formatoFechaDB)	
+
+			estado = cmbEstadoSolicitud
+
+		'4) Se prepara y ejecuta la transacción con la BBDD'
+			sql = "UPDATE CB_VAC_SOL_WEB " &_
+					" SET ESTADO = '"&estado&"' " &_
+					" , FEC_ULT_MODIF = SYSDATE" &_
+					" , LAST_USR = '" & LAST_USR&"' " &_
+					" , LAST_HOST = '" & LAST_HOST&"' " &_
+					" WHERE ID <> 0" &_
+					" AND COD_MF = " & col_COD_MF &_
+					" AND ID = " & col_ID 
+			''msg_onWindow sql, msg_Input 
+			obj.conexion.execute(sql)
+		'5) Se informan los resultados de la transacción'
+			'if col_EstadoImportacion = is_ADVERTENCIA_Ignorable then
+			'	obj.controles(grilla).ValorCelda("col_EstadoImportacion", i) = is_OK_RegistradoEnDB_Adv
+			'	else
+			'	obj.controles(grilla).ValorCelda("col_EstadoImportacion", i) = is_OK_RegistradoEnDB
+			'end if
+			'obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = "• " & obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i)
+			obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = "  •" & "Guardado en Buxis"
+			''pintarFila i+1, msg_DB_Update
+			nroFila = i+1
+			tipo 	= msg_DB_Update
+
+			pintarFilaGrilla nroFila, tipo, grilla, cantColumnasGrillaLectora
+			''msgObservacion = "OK: Guardado en BBDD Buxis con éxito"
+			''obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+			dbUpdateEstadoForm = true
+	end function 
+
+
+
+
+
+
+
+	private function dbUpdateInsertCbVac(i)
+				grilla = nombreGrillaLectora
+				dbInsertCbVac = false
+				'0) Se comienza con la lectura de cada fila de la grilla de previsualización (YA APROBADAS)'
+				'1) Se recuperan los valores correspondientes a cada columna'
+					col_COD_MF		= obj.controles(grilla).ValorCelda("col_COD_MF", i)		
+					col_PERIODO		= obj.controles(grilla).ValorCelda("col_PERIODO", i)		
+					col_COD_EMP		= obj.controles(grilla).ValorCelda("col_COD_EMP", i)		
+					col_FEC_INI		= obj.controles(grilla).ValorCelda("col_FEC_INI", i)		
+					col_FEC_FIN		= obj.controles(grilla).ValorCelda("col_FEC_FIN", i)		
+					col_CantDias	= obj.controles(grilla).ValorCelda("col_CantDias", i)			
+					col_FEC_PEDIDO	= obj.controles(grilla).ValorCelda("col_FEC_PEDIDO", i)			
+					col_PLUS_VAC	= obj.controles(grilla).ValorCelda("col_PLUS_VAC", i)			
+					col_ADE_VAC		= obj.controles(grilla).ValorCelda("col_ADE_VAC", i)		
+					col_MES			= obj.controles(grilla).ValorCelda("col_MES", i)	
+					col_ANIO		= obj.controles(grilla).ValorCelda("col_ANIO", i)		
+					col_APROB_VAC	= obj.controles(grilla).ValorCelda("col_APROB_VAC", i)			
+					LAST_USR		= obj.Usuario
+					LAST_HOST		= "FormCargado el " & getCurrentDateAsString
+
+				'2) Se realizan las asignaciones de valores booleanos'
+					col_PLUS_VAC	= getYesNoFromBool(getBooleanValue(col_PLUS_VAC))
+					col_ADE_VAC		= getYesNoFromBool(getBooleanValue(col_ADE_VAC))
+					col_APROB_VAC	= getYesNoFromBool(getBooleanValue(col_APROB_VAC))
+
+				'3) Se realizan las conversiones de fechas'
+					col_PERIODO		= Format(CStr(col_PERIODO)		, formatoFechaDB)
+					col_FEC_INI		= Format(CStr(col_FEC_INI)		, formatoFechaDB)
+					col_FEC_FIN		= Format(CStr(col_FEC_FIN)		, formatoFechaDB)
+					col_FEC_PEDIDO	= Format(CStr(col_FEC_PEDIDO)	, formatoFechaDB)	
+
+				'4) Se prepara y ejecuta la transacción con la BBDD'
+					insertSql = "INSERT INTO CB_VAC_SOL(COD_MF, PERIODO, COD_EMP, FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC,LAST_USR, LAST_HOST) "
+					insertSql = insertSql & " VALUES ('" & col_COD_MF & "'" 	&_
+							", TO_DATE('" & col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+							", " & col_COD_EMP &_
+							", TO_DATE('" & col_FEC_INI & "', '"&formatoFechaDB&"')" 	&_
+							", TO_DATE('" & col_FEC_FIN & "', '"&formatoFechaDB&"')" 	&_
+							", " & col_CantDias &_
+							", TO_DATE('" & col_FEC_PEDIDO & "', '"&formatoFechaDB&"')" 	&_
+							", '" & col_PLUS_VAC	& "'" &_
+							", '" & col_ADE_VAC		& "'" &_
+							", '" & col_MES			& "'" &_
+							", '" & col_ANIO		& "'" &_
+							", '" & col_APROB_VAC	& "'" &_
+							", '" & LAST_USR		& "'" &_
+							", '" & LAST_HOST		& "'" &_
+							" ) " 
+
+					''msg_onWindow insertSql, msg_Input 
+					obj.conexion.execute(insertSql)
+
+
+					''Actualizar Saldo en CB_VAC
+					sql = 	" UPDATE CB_VAC  " &_ 
+					" SET DIAS_TOMADOS = (DIAS_TOMADOS + " & col_CantDias &")" &_ 
+					" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+					" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	
+					''''msg_onWindow sql, msg_Input 
+					obj.conexion.execute(sql)
+
+
+					
+					''huboErrores_TransaccionDB = true
+				'5) Se informan los resultados de la transacción'
+			
+			obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = "  •" & "Guardado en Buxis" & "."
+			nroFila = i+1
+			tipo 	= msg_DB_Update
+
+			pintarFilaGrilla nroFila, tipo, grilla, cantColumnasGrillaLectora
+			''msgObservacion = "OK: Guardado en BBDD Buxis con éxito"
+			''obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+			dbInsertCbVac = true
+	end function 
