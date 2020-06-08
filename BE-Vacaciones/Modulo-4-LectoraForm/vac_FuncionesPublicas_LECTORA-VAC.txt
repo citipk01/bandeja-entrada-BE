@@ -240,17 +240,18 @@ const is_OK_RegistradoEnDB_Adv	= 5
 		obj.controles("lblPrevisualizacionForm").refControl.Font.Size = 15
 		obj.controles("btnDBActualizarFormVac").refControl.Visible = false
 		obj.controles("chkIngresoAutomatico").Valor = 1
-		obj.Fichas(7).SetFoco() ''"LectoraDeFormularios"
+		obj.Fichas(2).SetFoco() ''"LectoraDeFormularios"
 		obj.controles("txtCodFormularioLeido").setFoco()
 		''obj.EnviarMensaje "PORTAL","Asunto mensaje","Este es el Mensaje"
-		''mostrarFichas()
+		''mostrarFichas(3)
 	end sub
 
-	private function mostrarFichas()
+	private function mostrarFichas(cantFichasSolapas)
+		mensajeTitulo = "Fichas del mantenimiento"
 		i = 1
-		WHILE i<>3
+		WHILE i<>cantFichasSolapas
 			mensaje = i & ": " & obj.Fichas(i).Texto
-			inputBox "","", mensaje
+			inputBox "","", mensaje, vbInformation 	+ vbOkOnly, mensajeTitulo
 			i = i + 1
 		WEND
 	end function
@@ -2380,7 +2381,8 @@ const estado_Rechazado 	= "R"
 		end if 
 		'' 5) Aprobar todos los pendientes por defecto y marcar guardado en Buxis
 		if db_ESTADO_ID = estado_Pendiente then
-			obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitud", col_NroFilaGrilla) = estado_Aprobado
+			''obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitud", col_NroFilaGrilla) = estado_Aprobado
+			obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitudAccion", col_NroFilaGrilla) = estado_Aprobado
 			obj.controles(grilla).ValorCelda("col_chkGuardarEnBuxis", col_NroFilaGrilla) = true
 		end if 
 
@@ -2412,6 +2414,7 @@ const estado_Rechazado 	= "R"
 		cantFilasGrilla = obj.controles(grilla).filas
 		FOR i=0 TO (cantFilasGrilla - 1)
 			obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitud", i)	= estado_Aprobado
+			obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitudAccion", i)	= estado_Aprobado
 		NEXT
 	end function
 
@@ -2445,6 +2448,7 @@ const estado_Rechazado 	= "R"
 	public function posicionar_txtCodFormularioLeido
 		chkIngresoAutomatico 	= obj.controles("chkIngresoAutomatico").Valor
 		if chkIngresoAutomatico=0 then
+				obj.controles("txtCodFormularioLeido").pierdeFoco()
 				exit function
 			else
 				idSolicitud = obj.controles("txtCodFormularioLeido").texto
@@ -2453,6 +2457,7 @@ const estado_Rechazado 	= "R"
 				obj.controles("txtCodFormularioLeido").texto = ""
 				obj.controles("txtCodFormularioLeido").setFoco()
 		end if
+		obj.controles("txtCodFormularioLeido").texto = ""
 	end function
 ''**********************************************************************************************************************************************************************************************************''
 	public sub btnIngresarCodFormulario
@@ -2484,14 +2489,12 @@ const estado_Rechazado 	= "R"
 		'' 4) Cargar grilla con el CodFormulario validado
 		pintarCuadroLectura(true)
 		cargarGrillaLectora(idSolicitud)
-		'' 5) Limpiar ingreso del cuadro de texto y actualizar total de filas leídas
-		obj.controles("txtCodFormularioLeido").texto = ""
-		'' 5.2) total de filas en grilla
+		'' 5.1) Actualizar total de filas leídas en la grilla
 		informar_lblCantFilasGrillaLectora
-		pintarCuadroLectura(false)
-		obj.controles("btnDBActualizarFormVac").refControl.Visible = true
-		'' 5.3) Volver a posicionar el foco 
+		'' 5.2) Volver a posicionar el foco 
 		posicionar_txtCodFormularioLeido()
+		pintarCuadroLectura(false)
+
 	end sub
 ''**********************************************************************************************************************************************************************************************************''
 'Lecto
@@ -2801,7 +2804,8 @@ end sub
 			col_ID 			= obj.controles(grilla).ValorCelda("col_ID", i)
 			col_COD_MF		= obj.controles(grilla).ValorCelda("col_COD_MF", i)	
 			col_ESTADO_ID	= obj.controles(grilla).ValorCelda("col_ESTADO_ID", i)
-			cmbEstadoSolicitud	= obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitud", i)
+			''cmbEstadoSolicitud	= obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitud", i)
+			cmbEstadoSolicitud	= obj.controles(grilla).ValorCelda("col_cmbEstadoSolicitudAccion", i)
 			LAST_USR		= obj.Usuario
 			LAST_HOST		= "Modificado el " & getCurrentDateAsString
 
@@ -2830,26 +2834,14 @@ end sub
 			''msg_onWindow sql, msg_Input 
 			obj.conexion.execute(sql)
 		'5) Se informan los resultados de la transacción'
-			'if col_EstadoImportacion = is_ADVERTENCIA_Ignorable then
-			'	obj.controles(grilla).ValorCelda("col_EstadoImportacion", i) = is_OK_RegistradoEnDB_Adv
-			'	else
-			'	obj.controles(grilla).ValorCelda("col_EstadoImportacion", i) = is_OK_RegistradoEnDB
-			'end if
-			'obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = "• " & obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i)
-			obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = "  •" & "Guardado en Buxis"
-			''pintarFila i+1, msg_DB_Update
 			nroFila = i+1
-			tipo 	= msg_DB_Update
-
+			tipo 	= msg_DB_Update			
 			pintarFilaGrilla nroFila, tipo, grilla, cantColumnasGrillaLectora
-			''msgObservacion = "OK: Guardado en BBDD Buxis con éxito"
-			''obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+
+			msgObservacion = "• OK: " & "Guardado en Buxis"
+			obj.controles(grilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
 			dbUpdateEstadoForm = true
 	end function 
-
-
-
-
 
 
 
@@ -2858,6 +2850,7 @@ end sub
 				dbInsertCbVac = false
 				'0) Se comienza con la lectura de cada fila de la grilla de previsualización (YA APROBADAS)'
 				'1) Se recuperan los valores correspondientes a cada columna'
+					col_ID 			= obj.controles(grilla).ValorCelda("col_ID", i)
 					col_COD_MF		= obj.controles(grilla).ValorCelda("col_COD_MF", i)		
 					col_PERIODO		= obj.controles(grilla).ValorCelda("col_PERIODO", i)		
 					col_COD_EMP		= obj.controles(grilla).ValorCelda("col_COD_EMP", i)		
@@ -2871,7 +2864,7 @@ end sub
 					col_ANIO		= obj.controles(grilla).ValorCelda("col_ANIO", i)		
 					col_APROB_VAC	= obj.controles(grilla).ValorCelda("col_APROB_VAC", i)			
 					LAST_USR		= obj.Usuario
-					LAST_HOST		= "FormCargado el " & getCurrentDateAsString
+					LAST_HOST		= "FormID: "&col_ID&"•" & getCurrentDateAsString
 
 				'2) Se realizan las asignaciones de valores booleanos'
 					col_PLUS_VAC	= getYesNoFromBool(getBooleanValue(col_PLUS_VAC))
