@@ -1,0 +1,29 @@
+alter table f649_nuevo_log ADD  remu_hhee decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  remu_mov_viati decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  remu_mat_did decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  remu_exenta_mov_viati decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  remu_exenta_mat_did decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  ganot_retrib_no_hab decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  ganot_SAC_primera_cuota decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  ganot_SAC_segunda_cuota decimal(24,8) NULL;
+
+alter table f649_nuevo_log ADD  ganot_remu_hhee decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  ganot_remu_mov_viati decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  ganot_remu_mat_did decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  ganot_remu_exenta decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  ganot_remu_no_alcan decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  ganot_remu_exenta_hhee decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  ganot_remu_exenta_mov_viati decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  ganot_remu_exenta_mat_did decimal(24,8) NULL;
+
+alter table f649_nuevo_log ADD  prima_riesgo decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  seguro_retiro decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  cuotapartes_fondos decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  indumentaria decimal(24,8) NULL;
+
+alter table f649_nuevo_log ADD  ded_especifica decimal(24,8) NULL;
+alter table f649_nuevo_log ADD  cantidad_hijos integer  NULL;
+
+
+alter table f649_nuevo_param ADD  acum_movviat char(10) NULL;
+alter table f649_nuevo_param ADD  acum_matdid char(10) NULL;

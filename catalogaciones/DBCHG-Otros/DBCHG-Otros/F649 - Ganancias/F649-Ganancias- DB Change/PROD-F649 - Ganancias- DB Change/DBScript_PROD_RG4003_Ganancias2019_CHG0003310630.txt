@@ -1,0 +1,68 @@
+--0. Last Edited:		2019 04 05
+--1. Server Name: 	LACARGLXAP020
+--2. Database Name: 	HR_PROD   -    PSS3
+--3. Schema(s) Name:	BASEARG
+--
+-------------------------------------------------------------------------------------------------
+--1) Use this Connection
+--	HR_PROD = (DESCRIPTION = (ADDRESS_LIST = (ADDRESS =(PROTOCOL = TCP)(HOST = LACARGLXAP020.lac.nsroot.net)(PORT = 2432 ))) (CONNECT_DATA = (	SID = PSS3)))
+--
+--2) Change current schema
+	ALTER SESSION SET CURRENT_SCHEMA = "BASEARG";
+--	
+--  2.1) Create savepoint before execute script in case of failing
+--	SAVEPOINT backup_db_before_ran_script;
+--
+--3) Execute Script
+BEGIN
+	alter table f649_nuevo_log ADD  remu_hhee decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  remu_mov_viati decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  remu_mat_did decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  remu_exenta_mov_viati decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  remu_exenta_mat_did decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  ganot_retrib_no_hab decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  ganot_SAC_primera_cuota decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  ganot_SAC_segunda_cuota decimal(24,8) NULL;
+
+	alter table f649_nuevo_log ADD  ganot_remu_hhee decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  ganot_remu_mov_viati decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  ganot_remu_mat_did decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  ganot_remu_exenta decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  ganot_remu_no_alcan decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  ganot_remu_exenta_hhee decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  ganot_remu_exenta_mov_viati decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  ganot_remu_exenta_mat_did decimal(24,8) NULL;
+
+	alter table f649_nuevo_log ADD  prima_riesgo decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  seguro_retiro decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  cuotapartes_fondos decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  indumentaria decimal(24,8) NULL;
+
+	alter table f649_nuevo_log ADD  ded_especifica decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  cantidad_hijos integer  NULL;
+
+
+	alter table f649_nuevo_param ADD  acum_movviat char(10) NULL;
+	alter table f649_nuevo_param ADD  acum_matdid char(10) NULL;
+END;
+--4) Grants/Synonym to BXUSER
+--
+--	CREATE OR REPLACE PUBLIC SYNONYM "f649_nuevo_log" FOR "BASEARG"."f649_nuevo_log";
+--	GRANT select, insert, update, delete, alter on f649_nuevo_log  to BXUSER;
+--
+--	CREATE OR REPLACE PUBLIC SYNONYM "f649_nuevo_param" FOR "BASEARG"."f649_nuevo_param";
+--	GRANT select, insert, update, delete, alter on f649_nuevo_param  to BXUSER;
+--
+--
+--5) If all instructions have ran successfully:
+--	* Save changes:
+--	
+		COMMIT;	
+		\
+--
+--	* In case of failing:
+--		ROLLBACK TO backup_db_before_ran_script;
+--
+--
+--
+--Thanks & Regards

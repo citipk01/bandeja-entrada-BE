@@ -1,0 +1,239 @@
+1) Deploy by TFS 
+2) Back-up/ Reemplazo de archivo contenedor del texto
+3) Pruebas con el usuario final (Payroll)
+
+
+Objetivo
+Ver que el mensaje de descarga se haya modificado en PROD
+	http://lacargbaas193:8100/buxis/Integracion/RenderPartial?actionCode=MIRECIBO
+
+
+
+
+Succefully tested at UAT environment
+
+
+
+
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+[AR Buxis - PROD-TFS]-[RECIBO] - Changes on confirmation message before downloading a receipt file
+[AR Buxis - PROD-TFS]-[Recibo+ITR] - Encriptación dinámica de PDFs + Ejecutable .NET modificación cuentas patrimoniales (2019-09-16)
+[AR Buxis - UAT-TFS]-[Vacaciones]-SolicitudDeVacaciones- Instalación de fuente (2020-03-04 10:52)
+************************************************************************************************************************
+
+
+DESCRIPTION
+	1. Description of the change in layman terms, business and technical view.
+		Need to install an existing text font for new Buxis funtion: "Solicitud de Vacaciones WEB" 
+
+
+		Attached file: "Cambios Vacaciones y Alineación título.docx"
+
+	CHG0003682116	[AR Buxis - UAT-TFS]-[Vacaciones] - Arreglo en el calcúlo de días restantes y tomados (2019-09-24)
+	CHG0003703919	[AR Buxis - PROD-TFS]-[Vacaciones] - Arreglo en el calcúlo de días restantes y tomados (2019-09-24)
+
+	CTSK0010220312	[TFSDeployTask] [PROD] [Vacaciones] Arreglo en el cálculo de días tomados/ Restantes	CTI LA DC AR RDC	
+	CTSK0010204623	[WinTSK][AR Buxis-PROD-TFS]-[Vacaciones] - ArregloWEB para el calculo de vacaciones (2019-09-24)	CTI GL ICG WINDOWS	
+	CTSK0010201898	Post-Implementation Validation	GFTS LA PA AR BUXIS HR
+
+	2. Include the Timeline: ( Include the Timeline following the form below for each activity)
+		a. Task number b. Starting date of the Task. c. Starting time of the task (cannot be in the Red Zone) d. Duration of the task (please, use the DD:HH:MM denotation) e. Group in charge of the task  f. Task description
+
+		Change Window: 	2020-03-04 15:30 (ARG: UTC-3)
+					 	2020-03-05 15:30 (ARG: UTC-3)
+
+		STARTING DATE			TASK NUMBER 	TITLE												DURATION 		DESCRIPTION
+		2019/09/25	17:10(ARG)	CHG0003682116	[AR Buxis - UAT-TFS]-[Vacaciones] - Arreglo en ... 	N/A				N/A
+		2019/09/27	17:00(ARG)	CHG0003703919	[AR Buxis - PROD-TFS]-[Vacaciones] - Arreglo en...	N/A				N/A
+		2019/09/27	17:00(ARG)	CTSK0010220312	[TFSDeployTask] [PROD] [Vacaciones] Arreglo en e..	30m - 00:00:30	Drop files on Windows server (TFS Automated)
+		2019/09/27	17:30(ARG)	CTSK0010204623	[WinTSK][AR Buxis-PROD-TFS]-[Vacaciones][BCR] A... 	1h  - 00:01:00	Copy/replace files from Windows server
+		2019/09/27	18:30(ARG)	CTSK0010201898	Post-Implementation Validation	GFTS LA PA AR BU..	1h  - 00:01:00	Check results expected
+
+		*BCR : Backup, Copy, replace files
+
+	3. Describe the impact in case of fail.
+		Rollback/Backout will not need to be implemented
+
+	4. In case of dowtime, what services will be impacted or broken down?
+		N/A
+
+	5. The Green Zone Windows and validation of services & equipment are already negotiated with operation and business user? If the answer is "yes", please mention people or group name
+		N/A
+
+	6. Provide the business operational hours
+		Monday to Friday - 12 to 21 (GMT)
+
+JUSTIFICATION
+	1. Why is this change required?
+		[Vacaciones] Because of an Payroll's request / requirement for develop a new functionality of "Solicitud de Vacaciones WEB" 
+
+	2. What is the impact on services and businesses if this change is not implemented?
+		[Vacaciones] Payroll users couldn't test new functionality of "Solicitud de Vacaciones WEB" 
+
+	3. In case of Expedited or Emergency change, explain why the change can not be planned, include fines, penalties, or likelihood of service disruption if the change is not implemented.
+		N/A
+
+PRE IMPLEMENTATION TEST
+	1. What kind of test were done?
+		It was successfully implemented on UAT and DEV environments
+		CHG0003682116 [AR Buxis - UAT-TFS]-[Vacaciones] - Arreglo en el calcúlo de días restantes y tomados
+
+
+		Tested on UAT WebApp:
+		http://lacargbaas192:8100/buxis/Integracion/RenderPartial?actionCode=VAC_SOL#
+
+		Tested on DEV/SIT WebApp
+		http://vm-7408-853c:8100/buxis/Integracion/RenderPartial?actionCode=VAC_SOL
+
+		It was tested on our UAT server for this webapp 			(http://lacargbaas192:8100/buxis)
+		El cambio fue verificado en el servidor de UAT y en portal	(http://lacargbaas192:8100/buxis)
+
+	2. Does the CR have the approval from testing group?
+		N/A
+
+BACKOUT
+	1. List the detail step by step back out plan
+		AS descripted on task CTSK0010142672	
+		Before replacing, copy file as a backup and rename it to "{nameOfFile}.BACKUP"
+
+		In case of failing, windows user will use the backuped file as current
+
+	2. How long back out will take if involved
+		1h
+
+	3. Specific contacts that would be needed to back out the change out
+		AA58179 <aa58179@imcla.lac.nsroot.net>				- GFTS LA PA AR Buxis HR
+		And an admin user for PROD server (lacargbaas193) 	- CTI GL ICG WINDOWS
+
+
+		It's a bugfix on a number computing for "días tomados" field
+
+
+		------------------------------------------------------------------------------------------------------------------------------------------------
+		CHG0003682116
+		[AR Buxis - UAT-TFS]-[Vacaciones] - Arreglo en el calcúlo de días restantes y tomados (2019-09-24)
+
+
+
+https://servicemanagement.citigroup.net/change_request.do?sys_id=43d867af6fbff70001432fe64f3ee490&sysparm_record_target=change_request&sysparm_record_row=2&sysparm_record_rows=4&sysparm_record_list=active%3Dtrue%5Eassignment_group%3Djavascript%3AgetMyGroups%28%29%5EORDERBYDESCnumber
+POST IMPLEMENTATION VALIDATION
+	1. Provide a brief description of the steps that will be performed to validate the success of this change.
+		A Buxis user will do the following steps and will inform results on journal/close description
+			0. Payroll user will finish the upload of receipt files
+			
+			Post-Impl User:
+			1. On PROD webapp, go to "Autoservicio">"Mi Recibo"
+	         		http://lacargbaas193:8100/buxis/Integracion/RenderPartial?actionCode=MIRECIBO
+
+			2. Then will select the receipt file to download, message will appear and download of file must be start
+
+			3. Check all changes were done as expected 
+
+			Check on buxis webapp (ARG),  fixes on "Solicitud de Vacaciones" were applied successfully
+			- Buxis PROD: http://lacargbaas193:8100/buxis/
+
+
+	2. At what time and date will the Post Implementation validation be done? (remember the validation must be executed during the change window, if this is not possible explain in detail why not)
+		The same date as change will be implemented
+
+
+
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+[WinTSK][AR Buxis-PROD-TFS]-[Recibo+ITR] - Encrypt receipt download + ITR web files (2019-09-16)	
+[WinTSK][AR Buxis-PROD-TFS]-[Recibo] - Encrypt receipt download - NO ITR changes (2019-09-16)
+************************************************************************************************************************
+
+
+=============================================================================================
+IMPORTANT NOTE – Please adhere to the following instructions and help us to serve you better,  Failing to adhere to these instructions will lead to "delays in approval " or "Rejection" of the task 
+
+Before submitting this Change Task , make sure that the task is in line with the best practices published on the below SharePoint site: https://globalfunctionsshare.nam.citi.net/sites/ICGCTO/Windows/Pages/Standard-Requests.aspx
+
+** The cut-off time for review/accept Week-end Change Tasks (Fri 12:00 EST – Monday 12:00 EST) is Thursday 23:59 EST. Tasks created after this time will not be accepted unless they are Expedited or Emergency Changes **
+
+***Lead Time to review/accept Non-PROD Change Tasks is 4 Hours***  Kindly schedule Non-PROD(Test/Dev environment) changes during Weekdays and dedicate Week-ends for PROD/COB servers. 
+============================================================================================
+Mail DL : *CTI GLOBAL - ICG WINDOWS Support     Hotline Support : +1 908 563 6488 |+44 207 500 0002
+============================================================================================
+ICG/CTO Wintel L2 Escalation : https://otshare.nam.citi.net/sites/ASPACMI/CISSL2ICG/SitePages/L2Escalation.aspx
+=============================================================================================
+
+1)	PRE-IMPLEMENTATION COMMUNICATION : Contact info of Change Coordinator/ Application Support teams  to be notified PRIOR to start of Change Task
+
+	Full Name :		José Escobar
+	SOE ID:			JE95744
+	Phone No:		
+	Mail / Mail DL:        <je95744@imcla.lac.nsroot.net>
+
+2)	Task START TIME:  **IMPORTANT** Choose any one of the option below 
+	(ii) ANYTIME (With-in the CHG WINDOW)
+
+3a)	List the Hostnames of the servers(Affected CIs) involved in this Change Task activities :
+	Server: LACARGBAAS192
+
+3b)  Is the Affected servers are part of Cluster  : Yes / No (If Yes, provide special instructions - if any)
+	No
+
+4)	Instructions/Implementation steps applicable to Windows-SA:
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+| Instructions/Implementations Steps  				|	Server Host-names  	|    Dependencies – if any |
+|											|	LACARGBAAS192		|		N/A			|
+
+
+	We need to install an existing text font
+	D:\inetpub\wwwroot\buxis\vacGen\fuentePrincipal.ttf
+
+------------------------------------------------------------------------------------------------------------------------
+
+For software installations/package deployments,  provide proper TPM packages names. 
+Any requests for installation of Executable(s) from external sources, requires approval(s) from TISO/BISO and attach the same with CTSK for governance purpose.
+
+5)	If the Change involves server shutdown-reboot, mark Downtime (DT) as TRUE against the Impacted CI's, as it is required to suppress the alerts
+	N/A 
+
+6)  If the Change is for Server Decommission, mark Decommission(DC) as TRUE against the Impacted CI's as it is required to suppress the alerts.
+	Kindly note, server decommission tasks has to be discussed with respective L3 Primary SA first and in Aperture servers are marked as "pending-decommission"
+    N/A
+
+7) POST-IMPLEMENTATION COMMUNICATION : Contact info of Change Coordinator/ Application Support teams  to be notified 
+
+	Name :			Alvarez, Adriana Maria [CCC-OT] <aa58179@imcla.lac.nsroot.net>
+	SOE ID:			AA58179
+	Phone No:		---
+	Mail / Mail DL: *GFTS AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+
+
+
+
+
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+[AR Buxis-UAT-TFS]-[RECIBO] - Encriptación dinámica de archivos (2019-09-09)
+[TFSDeployTask] [PROD] [Recibo+ITR] - Encrypt receipt download + ITR web files (2019-09-16)
+************************************************************************************************************************
+Do TFS deployment for PROD environment 
+
+http://lacargbaas205:8080/TFSPromotion/BRM/Changes.aspx?BRM=201220015
+TFS: 	201220015
+PTSw: 	201815538-105
+
+
+
+
+For replies/requests... send us an email to our DL
+*GFTS AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+
+
+Thanks & Regards
+
+
+
+
+
+CTI LA DC AR RDC

@@ -1,0 +1,234 @@
+*************************************************************************************************************************************************
+************************************************************** UAT ******************************************************************************
+*************************************************************************************************************************************************
+AR Buxis - UAT - F649: Actualización - RG4003 2019 exF649
+
+DESCRIPTION
+	We need to add new columns on following tables, to fit them on new Buxis developments: "F649_NUEVO_LOG" "CB_FAM"
+
+	Se necesita agregar campos a las tablas F649_NUEVO_LOG y CB_FAM, para poder adaptarlas a los nuevos desarrollos de Buxis por las reformas de los formularios F1357 y F649
+	Para más detalle vea el mail adjunto: "FW  Actualización - RG4003 2019 exF649 v3 (Nuevos ajustes).msg"
+
+JUSTIFICATION
+	Required for Buxis developments because of reforms of F1357 and F649 forms
+
+	Requerido por los nuevos desarrllos de Buxis
+
+
+PRE IMPLEMENTATION TEST
+1. What kind of test were done?
+	All instructions have ran successfully on our Oracle Database
+
+BACKOUT
+	1. List the detail step by step back out plan
+		N/A
+
+	2. How long back out will take if involved
+		N/A 
+	
+	3. Specific contacts that would be needed to back out the change out
+		AS54421, AA58179 (+5491121601404)
+
+POST IMPLEMENTATION VALIDATION
+
+	1. Provide a brief description of the steps that will be performed to validate the success of this change.
+			- User will test if change on tables were done successfully
+
+		
+	2. At what time and date will the Post Implementation validation be done? (remember the validation must be executed during the change 	window, if this is not possible explain in detail why not) 
+
+			- The same day as the implementation change is ended up
+			
+
+*************************************************************************************************************************************************
+************************************************************** UAT TASK *************************************************************************
+*************************************************************************************************************************************************
+
+#### IMPORTAN NOTES #### (MANDATORY)
+
+1- Please remember to add into affected CI's the hostname/dataserver name.
+2- If downtime is required please remember to mark DT=TRUE in affected CI's and in the change too.
+3- Please submit the change before Thursday 12:00PM CST for PROD changes. Unless is a EMER CHG please reach us as soon as possible to coordinate this.
+4- UAT changes must be submited 24 hours before the window. OR the day before the window starts. (UAT changes outside of US Business our are not supported)
+5- Depending of the amount of changes in the weekend we can reject due a high volume of requests.
+6- Please give us at least 24h to review and accept task (all environments).
+
+#### PROVIDE APP NUMBER // CSI ####
+149086 - CTO LA PA AR BUXIS HR
+
+
+#### START TO OR WAIT FOR GO #### (MANDATORY)
+When should we start: As soon as the window starts
+
+#### INSTRUCTIONS OF THE TASK ####
+
+Please provide instructions and order of the scripts.
+
+Instructions:
+
+
+1. Server Name: 		LACARGLXAP019
+2. Database Name: 		HRTEST_11G
+3. Schema(s) Name:		BASEARG
+4. Location of script:	Attached file - "DBScript_UAT_F649-NuevosAjustes-Mayo2019_.txt"
+5. Activities to be performed:
+Note: Update in the task title or change which type of commands (Create,Drop,Alter,Truncate,Rename,INSERT,UPDATE,DELETE,EXECUTE,GRANT,COMMIT,ROLLBACK) are going to be performed on the server
+6. Team contact/DL for go-ahead: 	CTO LA PA AR BUXIS HR
+7. Actual time of deployment: 		10'
+
+
+#### CONTACT DETAILS #### (MANDATORY)
+
+Please provide contact information (SOEID, DL and secondary contact if needed)
+
+	SOEID: 		 			JE95744 <je95744@imcla.lac.nsroot.net>
+	Group Email: 			*CTO AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+	Primary Escalation: 	AA58179 <aa58179@imcla.lac.nsroot.net>
+	Secondary Escalation:	AS54421 <as54421@imcla.lac.nsroot.net>
+
+
+
+
+
+
+
+
+*************************************************************************************************************************************************
+************************************************************** PROD *****************************************************************************
+*************************************************************************************************************************************************
+AR Buxis - PROD - F649: Actualización - RG4003 2019 exF649
+
+
+DESCRIPTION
+
+	1. Description of the change in layman terms, business and technical view.
+		We need to add new columns on following tables, to fit them on new Buxis developments: "F649_NUEVO_LOG" "CB_FAM"
+
+		Se necesita agregar campos a las tablas F649_NUEVO_LOG y CB_FAM, para poder adaptarlas a los nuevos desarrollos de Buxis por las reformas de los formularios F1357 y F649
+		Para más detalle vea el mail adjunto: "FW  Actualización - RG4003 2019 exF649 v3 (Nuevos ajustes).msg"
+
+	2. Include the Timeline: ( Include the Timeline following the form below for each activity)
+		2019/05/06 11hs		Ran Successfully at SIT DB (Test/Development env) 
+		[ConfirmDate]		Ran Successfully at UAT DB on [CHGNumber:CHG0003374463]	AR Buxis - UAT - F649: Actualización - RG4003 2019 exF649
+		[ConfirmDate]		Execute DB task on PROD
+		[ConfirmDate]		Post Implementation Testing:  PROD User will check changes were done
+
+	a. Task number b. Starting date of the Task. c. Starting time of the task (cannot be in the Red Zone) d. Duration of the task (please, use the DD:HH:MM denotation) e. Group in charge of the task  f. Task description
+
+
+	3. Describe the impact in case of fail.
+		Payroll's users won't be able to implement the lawful form solution F1357 F649
+
+	4. In case of dowtime, what services will be impacted or broken down?
+		N/A
+
+	5. The Green Zone Windows and validation of services & equipment are already negotiated with operation and business user? If the answer is "yes", please mention people or group name
+		N/A
+
+	6. Provide the business operational hours
+		Monday to Friday - 12 to 21 (GMT)
+
+JUSTIFICATION
+
+	1. Why is this change required?
+		Required for Buxis developments because of reforms of F1357 and F649 forms
+		Requerido por los nuevos desarrllos de Buxis
+
+	2. What is the impact on services and businesses if this change is not implemented?
+		Payroll's users won't be able to implement the lawful form solution F1357 F649
+
+	3. In case of Expedited or Emergency change, explain why the change can not be planned, include fines, penalties, or likelihood of service disruption if the change is not implemented.
+		N/A 
+
+	
+
+	
+
+BACKOUT
+	1. List the detail step by step back out plan
+		1.1- Use PROD Connection for DB Restore BACKUP on Buxis server: LACARGLXAP020 
+			HR_PROD = (DESCRIPTION = (ADDRESS_LIST = (ADDRESS =(PROTOCOL = TCP)(HOST = LACARGLXAP020.lac.nsroot.net)(PORT = 2432 ))) (CONNECT_DATA = (	SID = PSS3)))
+
+		1.2- Rollback all changes descripted on attached script on DB task
+			SAVEPOINT 	backup_db_before_ran_script;
+			ROLLBACK TO backup_db_before_ran_script;
+
+	2. How long back out will take if involved
+		1hs 
+	
+	3. Specific contacts that would be needed to back out the change out
+		JE95744 <je95744@imcla.lac.nsroot.net>
+		*CTO AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+		Primary Escalation: 	AA58179 <aa58179@imcla.lac.nsroot.net>
+		Secondary Escalation:	AS54421 <as54421@imcla.lac.nsroot.net>
+
+
+
+PRE IMPLEMENTATION TEST
+1. What kind of test were done?
+	All instructions have ran successfully on our Oracle Database
+	It was also executed on UAT environment and It was approved by user post implementation assigned
+
+	UAT: [CHGNumber:CHG0003374463]	AR Buxis - UAT - F649: Actualización - RG4003 2019 exF649
+
+
+2. Does the CR have the approval from testing group?
+	N/A
+
+POST IMPLEMENTATION VALIDATION
+
+	1. Provide a brief description of the steps that will be performed to validate the success of this change.
+			- User will test if change on tables were done successfully
+		
+	2. At what time and date will the Post Implementation validation be done? (remember the validation must be executed during the change 	window, if this is not possible explain in detail why not) 
+
+			- The same day as the implementation change is ended up
+			
+
+
+*************************************************************************************************************************************************
+************************************************************** PROD TASK ************************************************************************
+*************************************************************************************************************************************************
+
+#### IMPORTAN NOTES #### (MANDATORY)
+
+1- Please remember to add into affected CI's the hostname/dataserver name.
+2- If downtime is required please remember to mark DT=TRUE in affected CI's and in the change too.
+3- Please submit the change before Thursday 12:00PM CST for PROD changes. Unless is a EMER CHG please reach us as soon as possible to coordinate this.
+4- UAT changes must be submited 24 hours before the window. OR the day before the window starts. (UAT changes outside of US Business our are not supported)
+5- Depending of the amount of changes in the weekend we can reject due a high volume of requests.
+6- Please give us at least 24h to review and accept task (all environments).
+
+#### PROVIDE APP NUMBER // CSI ####
+149086 - CTO LA PA AR BUXIS HR
+
+
+#### START TO OR WAIT FOR GO #### (MANDATORY)
+When should we start: As soon as the window starts
+
+#### INSTRUCTIONS OF THE TASK ####
+
+Please provide instructions and order of the scripts.
+
+Instructions:
+
+
+1. Server Name: 		LACARGLXAP020
+2. Database Name: 		HR_PROD   -    PSS3
+3. Schema(s) Name:		BASEARG
+4. Location of script:	Attached file - "DBScript_PROD_F649-NuevosAjustes-Mayo2019_.txt"
+5. Activities to be performed:
+Note: Update in the task title or change which type of commands (Create,Drop,Alter,Truncate,Rename,INSERT,UPDATE,DELETE,EXECUTE,GRANT,COMMIT,ROLLBACK) are going to be performed on the server
+6. Team contact/DL for go-ahead: 	CTO LA PA AR BUXIS HR
+7. Actual time of deployment: 		10'
+
+
+#### CONTACT DETAILS #### (MANDATORY)
+
+Please provide contact information (SOEID, DL and secondary contact if needed)
+
+	SOEID: 		 			JE95744 <je95744@imcla.lac.nsroot.net>
+	Group Email: 			*CTO AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+	Primary Escalation: 	AA58179 <aa58179@imcla.lac.nsroot.net>
+	Secondary Escalation:	AS54421 <as54421@imcla.lac.nsroot.net>
+

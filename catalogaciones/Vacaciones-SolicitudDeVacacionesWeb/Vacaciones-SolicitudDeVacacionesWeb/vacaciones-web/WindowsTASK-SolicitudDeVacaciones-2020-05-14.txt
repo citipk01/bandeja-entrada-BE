@@ -1,0 +1,45 @@
+﻿Last date modified:	2020-05-18 12:10
+Change/task Number:	CHG0004218198-CTSK0011595346
+Server: 			LACARGBAAS193(PROD) / LACARGBAAS192(UAT)
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+	1) Back-up -If there are these files on following paths, please rename them:
+		• D:\inetpub\wwwroot\buxis\Partials\js\
+			- "bxbtns.js"  			to "bxbtns.js.2020-05-15"
+			- "bxforms.js"  		to "bxforms.js.2020-05-15"
+			- "vacaciones_emp.js"	to "vacaciones_emp.js.2020-05-15"
+			- "formvacmipers.js"	to "formvacmipers.js.2020-05-15"
+
+		• D:\inetpub\wwwroot\buxis\Partials\
+			- "formvacmipers.html"	to "formvacmipers.html.2020-05-15"
+
+	2) Copy/replace files:
+		2.1.1) Copy all files/folders 
+			FROM: 	D:\BxChange\Buxis2020-05-13\VacacionesWeb\Partials\
+			TO: 	D:\inetpub\wwwroot\buxis\Partials\
+			
+		2.1.2) Except this:
+			- "bxbroker.asp"	from "D:\BxChange\Buxis2020-05-13\VacacionesWeb\Partials\asp\"
+
+		2.2) Copy following folders: "vacGen"  "vacForm"
+			FROM: 	D:\BxChange\Buxis2020-05-13\VacacionesWeb\Partials\
+			TO: 	D:\inetpub\wwwroot\buxis\
+
+
+	3) In case of failing post-implementation tests, user could ask you for rollback changes on files renamed
+
+	4) Install this text font
+		"fuentePrincipal.ttf"
+		from:
+		D:\BxChange\Buxis2020-05-13\VacacionesWeb\vacGen\
+
+
+	5) Please attach screenshots on task / email
+
+
+For replies/requests... send us an email to our DL
+*GFTS AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+
+
+Thanks & Regards

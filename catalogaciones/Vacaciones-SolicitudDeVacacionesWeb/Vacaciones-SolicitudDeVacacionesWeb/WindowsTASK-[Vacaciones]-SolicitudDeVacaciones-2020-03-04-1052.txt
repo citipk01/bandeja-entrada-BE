@@ -1,0 +1,46 @@
+﻿Last date modified:	2020-03-
+Change/task Number:	CHG0003703919-CTSK0010204623
+Server: 			LACARGBAAS193 / LACARGBAAS192
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+
+	1) Do a files back-up (If there are files)
+		
+		1.1) Rename current file from 	D:\inetpub\wwwroot\buxis\Partials\js\
+			 "vacaciones_emp.js"  to "vacaciones_emp.js.UAT201815538109"
+
+		1.2) Rename current file from 	D:\inetpub\wwwroot\buxis\Views\Shared\
+			 "_Layout.cshtml"  to "_Layout.cshtml.UAT201815538109"
+
+	2) Copy/replace files from followings paths:
+
+	╔═════════════════════╦═══════════════════════════════════════════════════════════════════════════╦═══════════════════════════════════════╗
+	║      Filename       ║                                   FROM                                    ║                  TO                   ║
+	╠═════════════════════╬═══════════════════════════════════════════════════════════════════════════╬═══════════════════════════════════════╣
+	║ "vacaciones_emp.js" ║D:\BxChange\Buxis2019-09-23\2019-09-23-ArregloWeb-Vacaciones\              ║D:\inetpub\wwwroot\buxis\Partials\js\  ║
+	║ "_Layout.cshtml"    ║D:\BxChange\Buxis2019-09-23\2019-09-23-ArregloWeb-DesalineadoNombreUsuario\║D:\inetpub\wwwroot\buxis\Views\Shared\ ║
+	╚═════════════════════╩═══════════════════════════════════════════════════════════════════════════╩═══════════════════════════════════════╝
+
+	3) In case of failing post-implementation tests, rollback changes on file replaced
+		FROM 	D:\inetpub\wwwroot\buxis\Partials\js\
+		"vacaciones_emp.js.UAT201815538109"	TO 	"vacaciones_emp.js"
+
+		FROM    D:\inetpub\wwwroot\buxis\Views\Shared\
+		"_Layout.cshtml.UAT201815538109"        TO      "_Layout.cshtml" 
+
+3) Please attach screenshots on task / email
+
+
+For replies/requests... send us an email to our DL
+*GFTS AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+
+
+Thanks & Regards
+
+------------------------------------------------------------
+CHG0003682116 [AR Buxis - UAT-TFS]-[Vacaciones] - Arreglo en el calcúlo de días restantes y tomados 
+CHG0003703919 [AR Buxis - PROD-TFS]-[Vacaciones] - Arreglo en el calcúlo de días restantes y tomados (2019-09-24)
+
+http://lacargbaas205:8080/TFSPromotion/BRM/Changes.aspx?BRM=201220022
+http://lacargbaas205:8080/tfs/GFTS%20Development/PS%20BUXIS/_versionControl#path=%24%2FPS+BUXIS%2FPromotions%2F2019%2F201220022&_a=contents

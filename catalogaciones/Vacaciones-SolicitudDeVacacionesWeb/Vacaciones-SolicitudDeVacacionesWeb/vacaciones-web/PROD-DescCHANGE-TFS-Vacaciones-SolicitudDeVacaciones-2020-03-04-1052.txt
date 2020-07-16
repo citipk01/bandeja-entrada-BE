@@ -1,0 +1,247 @@
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+[AR Buxis - PROD-TFS]-[RECIBO] - Changes on confirmation message before downloading a receipt file
+[AR Buxis - PROD-TFS]-[Recibo+ITR] - Encriptación dinámica de PDFs + Ejecutable .NET modificación cuentas patrimoniales (2019-09-16)
+[AR Buxis - UAT-TFS]-[Vacaciones]-SolicitudDeVacaciones- Instalación de fuente (2020-03-04 10:52)
+[AR Buxis - PROD-TFS]-[Vacaciones]-SolicitudDeVacaciones- Instalación de archivos web + fuente textual (2020-05-15)
+************************************************************************************************************************
+
+
+DESCRIPTION
+	1. Description of the change in layman terms, business and technical view.
+		Because a request for new Buxis funtion: "Solicitud de Vacaciones WEB"
+		- copy files on buxis app folder
+		- Need to install an existing text font
+
+		Uat tests:
+		CHG0004041467	[ARBuxis - UAT-DB]-[Vacaciones] - Creación de tabla para solicitud de vacaciones (2020-02-28) 
+		CHG0004051518	[ARBuxis - UAT]-[Vacaciones]-SolicitudDeVacaciones- Instalación de fuente (2020-03-04)
+
+	2. Include the Timeline: ( Include the Timeline following the form below for each activity)
+		a. Task number b. Starting date of the Task. c. Starting time of the task (cannot be in the Red Zone) d. Duration of the task (please, use the DD:HH:MM denotation) e. Group in charge of the task  f. Task description
+
+		Change Window: 	2020-05-22 15:00 (ARG: UTC-3)
+					 	2020-05-23 15:00 (ARG: UTC-3)
+
+		STARTING DATE			TASK NUMBER 	TITLE												DURATION 		DESCRIPTION
+		2020-05-22 	15:00(ARG)	CTSK0011595300	0. [DB][PROD][Vacaciones] - Solicitud de vacaci...	30m - 00:00:30	Run a DB Script
+		2020-05-22	15:30(ARG)	CTSK0011595321	1. [TFSDeployTask] [PROD][Vacaciones]-Solicitud...	30m - 00:00:30	Drop files on Windows server (TFS Automated)
+		2020-05-22	16:00(ARG)	CTSK0011595346	2. [Windows] [PROD][Vacaciones]-SolicitudDeVaca... 	1h  - 00:01:00	BCR files from Windows server
+		2020-05-22	16:30(ARG)	CTSK0011595259	3. Post-Implementation Validation					1h  - 00:01:00	Check results expected
+
+		*BCR : Backup, Copy, replace files
+
+	3. Describe the impact in case of fail.
+		Rollback/Backout will not need to be implemented
+
+	4. In case of dowtime, what services will be impacted or broken down?
+		N/A
+
+	5. The Green Zone Windows and validation of services & equipment are already negotiated with operation and business user? If the answer is "yes", please mention people or group name
+		N/A
+
+	6. Provide the business operational hours
+		Monday to Friday - 12 to 21 (GMT)
+
+JUSTIFICATION
+	1. Why is this change required?
+		[Vacaciones] Because of an Payroll's request / requirement for develop a new functionality of "Solicitud de Vacaciones WEB" 
+
+	2. What is the impact on services and businesses if this change is not implemented?
+		[Vacaciones] Payroll users couldn't test new functionality of "Solicitud de Vacaciones WEB" 
+
+	3. In case of Expedited or Emergency change, explain why the change can not be planned, include fines, penalties, or likelihood of service disruption if the change is not implemented.
+		N/A
+
+PRE IMPLEMENTATION TEST
+	1. What kind of test were done?
+		It was successfully implemented on UAT and DEV environments
+		CHG0004041467	[ARBuxis - UAT-DB]-[Vacaciones] - Creación de tabla para solicitud de vacaciones (2020-02-28) 
+		CHG0004051518	[ARBuxis - UAT]-[Vacaciones]-SolicitudDeVacaciones- Instalación de fuente (2020-03-04)
+
+
+		Tested on UAT WebApp:
+		http://lacargbaas192:8100/buxis/Integracion/RenderPartial?actionCode=VAC_SOL#
+
+		Tested on DEV/SIT WebApp
+		http://vm-7408-853c:8100/buxis/Integracion/RenderPartial?actionCode=VAC_SOL
+
+		It was tested on our UAT server for this webapp 			(http://lacargbaas192:8100/buxis)
+		El cambio fue verificado en el servidor de UAT y en portal	(http://lacargbaas192:8100/buxis)
+
+	2. Does the CR have the approval from testing group?
+		N/A
+
+BACKOUT
+	1. List the detail step by step back out plan
+		AS descripted on task CTSK0010142672	
+		Before replacing, copy file as a backup and rename it to "{nameOfFile}.BACKUP"
+
+		In case of failing, windows user will use the backuped file as current
+
+	2. How long back out will take if involved
+		1h
+
+	3. Specific contacts that would be needed to back out the change out
+		AA58179 <aa58179@imcla.lac.nsroot.net>				- GFTS LA PA AR Buxis HR
+		And an admin user for PROD server (lacargbaas193) 	- CTI GL ICG WINDOWS
+
+
+POST IMPLEMENTATION VALIDATION
+	1. Provide a brief description of the steps that will be performed to validate the success of this change.
+		A Buxis user will do the following steps and will inform results on journal/close description
+			0. Payroll user will test on PROD webapp, new funcionality:
+			http://lacargbaas193:8100/buxis/Integracion/RenderPartial?actionCode=MIFORMVAC2
+
+
+	2. At what time and date will the Post Implementation validation be done? (remember the validation must be executed during the change window, if this is not possible explain in detail why not)
+		The same date as change will be implemented
+
+
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+0. [DB][PROD][Vacaciones] - Solicitud de vacaciones (2020-05-15)
+************************************************************************************************************************
+
+
+	#### IMPORTAN NOTES #### (MANDATORY)
+	*** By submitting this TASK you're accepting the following conditions. ***
+	*** Don't delete template details, if do so, task will be rejected and no executed at all ***
+	------------------------------------------------------------------------------------------------------------------------
+
+	1- Please remember to add into affected CI's the hostname/data server name.
+	2- If downtime is required please remember to mark DT=TRUE in affected CI's and in the change too.
+	3- Please submit the change before Thursday 12:00PM CST for PROD changes. Unless is a EMER CHG please reach us as soon as possible to coordinate this.
+	4- UAT changes must be submitted 24 hours before the window. OR the day before the window starts. (UAT changes outside of US Business our are not supported)
+	5- Depending of the amount of changes in the weekend we can reject due a high volume of requests.
+	6- Please give us at least 24h to review and accept task (all environments).
+
+	Group E-mail: 
+	L2 Team: *CTI NAM CTSIS Oracle DBA 		  <dl.cti.nam.ctsis.oracle.dba@imcnam.ssmb.com>
+	L3 Team: *CTI LATAM CIS DB Oracle Support <dl.cti.latam.cis.db.oracle.support@imcla.lac.nsroot.net>  
+	HOTLINE: (24x7)  +1 908-563-5990 
+
+	#### PROVIDE APP NUMBER // CSI ####
+	149086 - CTO LA PA AR BUXIS HR
+
+	#### START TO OR WAIT FOR GO #### (MANDATORY)
+	When should we start: As soon as the window starts
+
+	#### INSTRUCTIONS OF THE TASK ####
+
+	Please provide instructions and order of the scripts.
+
+	Instructions:
+
+	1. Server Name: 		LACARGLXAP020
+	2. Database Name: 		HR_PROD 	- 	PSS3
+	3. Schema(s) Name:		BASEARG
+	4. Location of script:	Attached files: "DB_Vacaciones-2019-12-27-1112.sql"
+											"1.DB-Recibo-2020-03-16-AlterColumn_NetoLetras.sql"																						
+
+	5.Activities to be performed:
+		5.a) Create/replace table
+				run attached file: "DB_Vacaciones-2019-12-27-1112.sql"
+				"1.DB-Recibo-2020-03-16-AlterColumn_NetoLetras.sql"	
+
+	Note: Update in the task title or change which type of commands (Create,Drop,Alter,Truncate,Rename,INSERT,UPDATE,DELETE,EXECUTE,GRANT,COMMIT,ROLLBACK) are going to be performed on the server
+	6. Team contact/DL for go-ahead: 	CTO LA PA AR BUXIS HR
+	7. Actual time of deployment: 		30'
+
+
+	ETA for the execution of the task: 
+
+
+	#### CONTACT DETAILS #### (MANDATORY)
+
+	Please provide contact information (SOEID, DL and secondary contact if needed)
+
+		Group Email: 			*CTO  AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+		Primary Escalation: 	*GFTS AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+								AA58179 <aa58179@imcla.lac.nsroot.net>
+		Secondary Escalation:	AS54421 <as54421@imcla.lac.nsroot.net>
+								'Ignacio Gerome' <igerome@programatika.com>
+
+
+
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+1. [TFSDeployTask] [PROD][Vacaciones]-SolicitudDeVacaciones (2020-05-15)
+************************************************************************************************************************
+Hi Data Center Team
+
+Once BR approval is completed, We need your help to deploy files for this TFS Promotion:
+	http://lacargbaas205:8080/TFSPromotion/BRM/Changes.aspx?BRM=201220150
+
+Thanks!!
+
+
+This task do not need access to PROD Server 
+Files copying are automated by TFS system only DataCenter approval triggers their starting 
+
+TFS shows an error after deploy but it's often cause by files copying into D Diskdrive
+In spite of this error message, we need to check with a Windows Server member the existance of files after deploying (We do this proccessing on other task) 
+
+For replies/requests... send us an email to our DL
+*GFTS AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+
+
+Thanks & Regards
+
+************************************************************************************************************************
+************************************************************************************************************************
+************************************************************************************************************************
+2. [Windows] [PROD][Vacaciones]-SolicitudDeVacaciones (2020-05-15)
+************************************************************************************************************************
+Before submitting this Change Task , make sure that the task is in line with the best practices published on the below SharePoint site: https://globalfunctionsshare.nam.citi.net/sites/ICGCTO/Windows/Pages/Standard-Requests.aspx
+
+** The cut-off time for review/accept Week-end Change Tasks (Fri 12:00 EST – Monday 12:00 EST) is Thursday 23:59 EST. Tasks created after this time will not be accepted unless they are Expedited or Emergency Changes **
+1)	PRE-IMPLEMENTATION COMMUNICATION : Contact info of Change Coordinator/ Application Support teams  to be notified PRIOR to start of Change Task
+
+	Full Name :		José Escobar
+	SOE ID:			JE95744
+	Phone No:		
+	Mail / Mail DL:        <je95744@imcla.lac.nsroot.net>
+
+2)	Task START TIME:  **IMPORTANT** Choose any one of the option below 
+	(ii) ANYTIME (With-in the CHG WINDOW)
+
+3a)	List the Hostnames of the servers(Affected CIs) involved in this Change Task activities :
+	Server: on affected CIs
+
+3b)  Is the Affected servers are part of Cluster  : Yes / No (If Yes, provide special instructions - if any)
+	No
+
+4)	Instructions/Implementation steps applicable to Windows-SA:
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+| Instructions/Implementations Steps  				|	Server Host-names  	|    Dependencies – if any |
+|											|	LACARGBAAS193		|		N/A			|
+
+• Attached file: "WindowsTASK-SolicitudDeVacaciones-2020-05-14.txt"
+------------------------------------------------------------------------------------------------------------------------
+
+For software installations/package deployments,  provide proper TPM packages names. 
+Any requests for installation of Executable(s) from external sources, requires approval(s) from TISO/BISO and attach the same with CTSK for governance purpose.
+
+5)	If the Change involves server shutdown-reboot, mark Downtime (DT) as TRUE against the Impacted CI's, as it is required to suppress the alerts
+	N/A 
+
+6)  If the Change is for Server Decommission, mark Decommission(DC) as TRUE against the Impacted CI's as it is required to suppress the alerts.
+	Kindly note, server decommission tasks has to be discussed with respective L3 Primary SA first and in Aperture servers are marked as "pending-decommission"
+    N/A
+
+7) POST-IMPLEMENTATION COMMUNICATION : Contact info of Change Coordinator/ Application Support teams  to be notified 
+
+	Name :			Alvarez, Adriana Maria [CCC-OT] <adriana.maria.alvarez@citi.com>
+	SOEID:			AA58179
+	Phone No:		---
+	Mail / Mail DL: *GFTS AR GPA Buxis HR <dl.cto.ar.gpa.buxis.hr@imcla.lac.nsroot.net>
+
+
+
+
+

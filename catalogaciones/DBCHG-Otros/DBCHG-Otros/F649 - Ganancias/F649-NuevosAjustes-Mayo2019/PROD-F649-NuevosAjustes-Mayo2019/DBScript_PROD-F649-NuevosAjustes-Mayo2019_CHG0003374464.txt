@@ -1,0 +1,43 @@
+--0. Last Edited:		2019 05 06
+--1. Server Name: 		LACARGLXAP020
+--2. Database Name: 	HR_PROD   -    PSS3
+--3. Schema(s) Name:	BASEARG
+--
+-------------------------------------------------------------------------------------------------
+--1) Use this Connection
+--	HR_PROD = (DESCRIPTION = (ADDRESS_LIST = (ADDRESS =(PROTOCOL = TCP)(HOST = LACARGLXAP020.lac.nsroot.net)(PORT = 2432 ))) (CONNECT_DATA = (	SID = PSS3)))
+--
+--2) Change current schema
+	ALTER SESSION SET CURRENT_SCHEMA = "BASEARG";
+	
+--2.1) Create savepoint before execute script in case of failing
+	--SAVEPOINT backup_db_before_ran_script;
+
+--3) Execute Script
+--BEGIN
+	alter table f649_nuevo_log ADD  ret_hhee_exenta decimal(24,8) NULL;
+	alter table f649_nuevo_log ADD  remu_ex_ganot 	decimal(24,8) NULL;
+	alter table cb_fam 		ADD     fecha_creacion	DATE DEFAULT sysdate;
+	alter table a_cb_fam	ADD		fecha_creacion	DATE DEFAULT sysdate;
+--END;
+
+--4) Grants/Synonym to BXUSER
+
+--	/*
+--	CREATE OR REPLACE PUBLIC SYNONYM "f649_nuevo_log" FOR "BASEARG"."f649_nuevo_log";
+--	GRANT select, insert, update, delete, alter ON f649_nuevo_log	TO BXUSER;
+--	*/
+
+
+--5) If all instructions have ran successfully:
+--	* Save changes:
+--	
+		COMMIT;	
+		/
+--
+--	* In case of failing:
+--		ROLLBACK TO backup_db_before_ran_script;
+--
+--
+--
+--Thanks & Regards

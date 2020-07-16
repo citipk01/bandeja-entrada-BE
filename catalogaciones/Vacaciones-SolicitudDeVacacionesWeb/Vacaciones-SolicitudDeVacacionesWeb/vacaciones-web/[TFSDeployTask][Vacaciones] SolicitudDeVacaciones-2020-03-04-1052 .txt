@@ -1,0 +1,27 @@
+Hi Data Center Team
+
+We need your help on this TFS Promotion 201220022, once BR approval is finished will need yours for files copying on ARG Prod Server LACARGBAAS193
+
+Thanks!!
+
+References:
+http://lacargbaas205:8080/TFSPromotion/BRM/Changes.aspx?BRM=201220022
+
+
+http://lacargbaas205:8080/tfs/GFTS%20Development/PS%20BUXIS/_versionControl#path=%24%2FPS+BUXIS%2FPromotions%2F2019%2F201220022&_a=contents
+
+
+
+
+
+---------
+This task do not need access to PROD Server 
+Files copying are automated by TFS system. Only DataCenter approval triggers their starting 
+
+
+FACT:
+TFS informs an error after deploy, but it's often caused by files copying into D drive
+In spite of this error message, we need to check,, with support of a Windows Server member, the existance of files after deploying (We do this proccessing on other task)
+
+
+Attached mail as evidence: "RE CTSK0010142813 - Deploy TFS 201220015.msg"
